@@ -1,0 +1,6 @@
+apiVersion: 1
+providers:
+  - name: LedgerCore
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards

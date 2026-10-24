@@ -1,0 +1,57 @@
+
+         /\      Grafana   /‾‾/
+    /\  /  \     |\  __   /  /
+   /  \/    \    | |/ /  /   ‾‾\
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/
+
+     execution: local
+        script: /work/workload.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 1 max VUs, 32s max duration (incl. graceful stop):
+              * default: 1 looping VUs for 2s (gracefulStop: 30s)
+
+
+running (01.0s), 1/1 VUs, 7 complete and 0 interrupted iterations
+default   [  50% ] 1 VUs  1.0s/2s
+
+running (02.0s), 1/1 VUs, 15 complete and 0 interrupted iterations
+default   [ 100% ] 1 VUs  2s
+
+
+  █ THRESHOLDS
+
+    checks
+    ✓ 'rate>0.99' rate=100.00%
+
+
+  █ TOTAL RESULTS
+
+    checks_total.......................: 16      7.701412/s
+    checks_succeeded...................: 100.00% 16 out of 16
+    checks_failed......................: 0.00%   0 out of 16
+
+    ✓ transfer accepted or insufficient
+
+    HTTP
+    http_req_duration.......................................................: avg=28.64ms  min=19.79ms  med=26.11ms  max=41.19ms  p(90)=39.09ms p(95)=40.3ms
+      { expected_response:true }............................................: avg=28.64ms  min=19.79ms  med=26.11ms  max=41.19ms  p(90)=39.09ms p(95)=40.3ms
+    http_req_failed.........................................................: 0.00% 0 out of 16
+    http_reqs...............................................................: 16    7.701412/s
+
+    EXECUTION
+    iteration_duration......................................................: avg=129.78ms min=120.45ms med=127.28ms max=142.42ms p(90)=140.4ms p(95)=141.61ms
+    iterations..............................................................: 16    7.701412/s
+    vus.....................................................................: 1     min=1       max=1
+    vus_max.................................................................: 1     min=1       max=1
+
+    NETWORK
+    data_received...........................................................: 12 kB 5.8 kB/s
+    data_sent...............................................................: 10 kB 4.8 kB/s
+
+
+
+
+running (02.1s), 0/1 VUs, 16 complete and 0 interrupted iterations
+default ✓ [ 100% ] 1 VUs  2s

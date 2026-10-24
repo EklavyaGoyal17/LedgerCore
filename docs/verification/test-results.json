@@ -1,0 +1,89 @@
+{
+  "verificationDate": "2026-10-24",
+  "command": "mvn -q spotless:apply clean verify",
+  "java": "Temurin 21.0.12.1",
+  "totals": {
+    "tests": 44,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "instructionCoverage": {
+    "covered": 3560,
+    "missed": 467,
+    "percent": 88.4
+  },
+  "suites": [
+    {
+      "suite": "com.ledgercore.FinancialDomainTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "testCases": [
+        "moneyIsExactAndCanonical",
+        "generatedBalancedJournalsPreserveExactEquality",
+        "rejectsInvalidAmounts(String)[1]",
+        "rejectsInvalidAmounts(String)[2]",
+        "rejectsInvalidAmounts(String)[3]",
+        "rejectsInvalidAmounts(String)[4]",
+        "rejectsInvalidAmounts(String)[5]",
+        "rejectsInvalidAmounts(String)[6]",
+        "terminalTransferCannotBeReopened",
+        "rejectsUnsupportedCurrency",
+        "validatesEachEntryAndWholeJournal",
+        "fingerprintsAreStableAndDistinguishRequests"
+      ]
+    },
+    {
+      "suite": "com.ledgercore.EventInfrastructureIT",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "testCases": [
+        "kafkaOutageAcknowledgmentLossRedeliveryAndConsumerRecovery",
+        "redisUsesAtomicExpiryAndDocumentedOutagePolicies"
+      ]
+    },
+    {
+      "suite": "com.ledgercore.LedgerCoreIT",
+      "tests": 30,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "testCases": [
+        "failedOutcomeIsDurableEvenIfFundsArriveLater",
+        "generatedTransferSequencesPreserveLiabilitiesAndReconcile",
+        "repeatedConcurrentWithdrawalsCannotOverspend",
+        "invalidJwtClaimsAreRejected(String)[1]",
+        "invalidJwtClaimsAreRejected(String)[2]",
+        "invalidJwtClaimsAreRejected(String)[3]",
+        "invalidJwtClaimsAreRejected(String)[4]",
+        "invalidJwtClaimsAreRejected(String)[5]",
+        "invalidJwtClaimsAreRejected(String)[6]",
+        "generatedOpenApiDescribesTheReplayableTransferResponse",
+        "consumerDeduplicationAndItsProjectionCommitTogether",
+        "reversalCannotOverdrawRecipientAndCanBeRetriedWithANewKey",
+        "responseLossAfterCommitReplaysOriginalOutcome",
+        "expiryIsInformationalAndNeverReleasesAUsedKey",
+        "httpOwnershipRolesValidationAndProblemDetails",
+        "duplicateRequestsIncludingCanonicalAmountsPostOnlyOnce",
+        "databaseRejectsUnbalancedJournalAtCommit",
+        "validationAndObjectAuthorizationDoNotConsumeAKey",
+        "precommitFailuresRollbackEveryFinancialEffect(Point)[1]",
+        "precommitFailuresRollbackEveryFinancialEffect(Point)[2]",
+        "precommitFailuresRollbackEveryFinancialEffect(Point)[3]",
+        "precommitFailuresRollbackEveryFinancialEffect(Point)[4]",
+        "precommitFailuresRollbackEveryFinancialEffect(Point)[5]",
+        "reconcilerDetectsControlledCorruptionAndDoesNotRepairIt",
+        "databaseRejectsEditingDeletingAndAppendingCommittedEntries",
+        "transferIsBalancedAndStatementUsesLedger",
+        "reversalIsCompensatingAndCannotBeRepeatedUnderAnotherKey",
+        "oppositeDirectionTransfersDoNotDeadlock",
+        "reconciliationIndependentlyDetectsWrongTransferAmount",
+        "realBcryptLoginAndJwtValidation"
+      ]
+    }
+  ]
+}

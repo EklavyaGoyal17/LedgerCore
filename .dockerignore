@@ -1,0 +1,6 @@
+.git
+.env
+.tools
+target
+docs
+load-tests

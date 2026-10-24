@@ -1,0 +1,66 @@
+Measured on local PostgreSQL 17.6 simulation after API demo and five 2-second, one-VU k6 smoke runs. Tiny dataset, warm cache; this is query-shape evidence, not a throughput benchmark.
+
+                                                     QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=4.77..4.78 rows=1 width=24) (actual time=0.117..0.118 rows=0 loops=1)
+   Buffers: shared hit=10
+   ->  Sort  (cost=4.77..4.78 rows=1 width=24) (actual time=0.115..0.116 rows=0 loops=1)
+         Sort Key: created_at, id
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: shared hit=10
+         ->  Seq Scan on outbox_events  (cost=0.00..4.76 rows=1 width=24) (actual time=0.038..0.039 rows=0 loops=1)
+               Filter: ((published_at IS NULL) AND (next_attempt_at <= clock_timestamp()))
+               Rows Removed by Filter: 51
+               Buffers: shared hit=4
+ Planning:
+   Buffers: shared hit=101
+ Planning Time: 1.268 ms
+ Execution Time: 0.159 ms
+(14 rows)
+
+                                                           QUERY PLAN
+---------------------------------------------------------------------------------------------------------------------------------
+ HashAggregate  (cost=4.99..5.05 rows=5 width=48) (actual time=0.087..0.090 rows=5 loops=1)
+   Group Key: a.id
+   Batches: 1  Memory Usage: 24kB
+   Buffers: shared hit=3
+   ->  Hash Right Join  (cost=1.11..4.36 rows=84 width=32) (actual time=0.043..0.067 rows=83 loops=1)
+         Hash Cond: (e.ledger_account_id = a.ledger_account_id)
+         Buffers: shared hit=3
+         ->  Seq Scan on journal_entries e  (cost=0.00..2.84 rows=84 width=32) (actual time=0.010..0.016 rows=84 loops=1)
+               Buffers: shared hit=2
+         ->  Hash  (cost=1.05..1.05 rows=5 width=32) (actual time=0.018..0.018 rows=5 loops=1)
+               Buckets: 1024  Batches: 1  Memory Usage: 9kB
+               Buffers: shared hit=1
+               ->  Seq Scan on financial_accounts a  (cost=0.00..1.05 rows=5 width=32) (actual time=0.009..0.010 rows=5 loops=1)
+                     Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=148 dirtied=3
+ Planning Time: 1.466 ms
+ Execution Time: 0.164 ms
+(18 rows)
+
+                                                        QUERY PLAN
+---------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=3.66..3.71 rows=17 width=56) (actual time=0.145..0.148 rows=3 loops=1)
+   Buffers: shared hit=3
+   InitPlan 1
+     ->  Limit  (cost=0.00..0.27 rows=1 width=16) (actual time=0.015..0.016 rows=1 loops=1)
+           Buffers: shared hit=1
+           ->  Seq Scan on financial_accounts  (cost=0.00..1.06 rows=4 width=16) (actual time=0.014..0.015 rows=1 loops=1)
+                 Filter: (balance_minor > 0)
+                 Rows Removed by Filter: 1
+                 Buffers: shared hit=1
+   ->  Sort  (cost=3.40..3.44 rows=17 width=56) (actual time=0.143..0.144 rows=3 loops=1)
+         Sort Key: e.created_at, e.id
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: shared hit=3
+         ->  Seq Scan on journal_entries e  (cost=0.00..3.05 rows=17 width=56) (actual time=0.037..0.044 rows=3 loops=1)
+               Filter: (ledger_account_id = (InitPlan 1).col1)
+               Rows Removed by Filter: 81
+               Buffers: shared hit=3
+ Planning:
+   Buffers: shared hit=20
+ Planning Time: 0.546 ms
+ Execution Time: 0.220 ms
+(21 rows)
