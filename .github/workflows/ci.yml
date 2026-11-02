@@ -17,6 +17,14 @@ jobs:
         run: mvn -B -ntp clean verify
       - name: Validate Compose
         run: docker compose config --quiet
+      - name: Build packaged image and enforce Java 21 runtime
+        run: |
+          docker build -t ledgercore:ci .
+          docker run --rm --entrypoint java ledgercore:ci -version 2>&1 | grep -E 'version "21[.]'
+      - name: Check backup and restore safety guards
+        run: python3 scripts/test_database_tools.py
+      - name: Scan resolved runtime dependencies against OSV
+        run: python3 scripts/scan-dependencies.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
@@ -25,4 +33,8 @@ jobs:
             target/surefire-reports/
             target/failsafe-reports/
             target/site/jacoco/
+            target/spotbugsXml.xml
+            target/bom.json
+            target/classes/META-INF/sbom/application.cdx.json
+            target/security/
           retention-days: 14

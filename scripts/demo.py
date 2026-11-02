@@ -4,6 +4,7 @@ Usage: python scripts/demo.py
 Set BASE_URL, ADMIN_EMAIL and ADMIN_PASSWORD if local Compose defaults changed.
 """
 import concurrent.futures
+from decimal import Decimal
 import json
 import os
 import uuid
@@ -43,12 +44,17 @@ def main():
     a = ok("POST", "/api/v1/accounts", {"currency": "INR"}, users[0])["id"]
     b = ok("POST", "/api/v1/accounts", {"currency": "INR"}, users[1])["id"]
     c = ok("POST", "/api/v1/accounts", {"currency": "INR"}, users[1])["id"]
-    ok("POST", "/api/v1/admin/simulated-deposits", {"accountId": a, "amount": "1500.00", "currency": "INR"}, admin, str(uuid.uuid4()))
+    deposit = ok("POST", "/api/v1/admin/simulated-deposits", {"accountId": a, "amount": "1500.00", "currency": "INR"}, admin, str(uuid.uuid4()))
     body = {"sourceAccountId": a, "destinationAccountId": b, "amount": "500.00", "currency": "INR"}
     key = str(uuid.uuid4())
     transfer = ok("POST", "/api/v1/transfers", body, users[0], key)
     replay = ok("POST", "/api/v1/transfers", body, users[0], key)
     assert replay == transfer
+    journal = ok("GET", f"/api/v1/journals/{transfer['journalId']}", token=users[0])
+    deposit_journal = ok("GET", f"/api/v1/journals/{deposit['journalId']}", token=users[0])
+    assert sum(Decimal(e["debit"]) for e in journal["entries"]) == Decimal("500.00")
+    assert sum(Decimal(e["credit"]) for e in journal["entries"]) == Decimal("500.00")
+    assert {e["classification"] for e in deposit_journal["entries"]} == {"ASSET", "LIABILITY"}
     assert ok("GET", f"/api/v1/accounts/{a}/balance", token=users[0])["amount"] == "1000.00"
     assert ok("GET", f"/api/v1/accounts/{b}/balance", token=users[1])["amount"] == "500.00"
     status, problem = request("POST", "/api/v1/transfers", dict(body, amount="2000.00"), users[0], str(uuid.uuid4()))
@@ -61,7 +67,7 @@ def main():
     assert ok("GET", f"/api/v1/accounts/{a}/balance", token=users[0])["amount"] == "200.00"
     report = ok("POST", "/api/v1/admin/reconciliation-runs", {}, admin)
     assert report["status"] == "CLEAN", report
-    print(json.dumps({"simulation": True, "transfer": transfer, "sourceStatement": ok("GET", f"/api/v1/accounts/{a}/statement", token=users[0]), "reconciliation": report}, indent=2))
+    print(json.dumps({"simulation": True, "transfer": transfer, "journal": journal, "depositJournal": deposit_journal, "sourceStatement": ok("GET", f"/api/v1/accounts/{a}/statement", token=users[0]), "reconciliation": report}, indent=2))
     print("PASS: successful transfer, duplicate replay, insufficient funds, concurrent withdrawals, balances, statement, reconciliation")
 
 

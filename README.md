@@ -39,6 +39,8 @@ The financial core supports INR and USD with two decimal places, simulated depos
 internal transfers, status queries, administrator reversals, ledger-derived balances,
 paginated statements, durable success and insufficient-funds replay, independent
 reconciliation and recoverable asynchronous audit projections.
+Finished replay identities/outcomes and financial event evidence are protected by
+database triggers. See [financial integrity controls](docs/architecture/financial-integrity.md).
 
 ## Start locally
 
@@ -119,6 +121,8 @@ key. Technical failures roll back; business insufficient-funds outcomes remain
 durable. Validation/authorization errors do not consume a key.
 
 View `GET /api/v1/accounts/{id}/balance` and `/statement?offset=0&limit=50`.
+Inspect the complete immutable accounting evidence with
+`GET /api/v1/journals/{journalId}` as a participating account owner or administrator.
 Reversals at `POST /api/v1/transfers/{id}/reversals` require administrator role
 and a new idempotency key. Reversals fail if the original recipient has spent
 the funds; they never create an overdraft. Simulated deposits are not reversible
@@ -134,6 +138,8 @@ Docker is missing.
 mvn spotless:apply      # only needed after editing Java
 mvn test               # domain/unit tests
 mvn clean verify       # format check, unit + real infrastructure tests, coverage, jar
+python scripts/scan-dependencies.py  # resolved runtime SBOM against OSV
+python scripts/test_database_tools.py # backup/restore safety guards
 docker compose config --quiet
 ```
 
@@ -146,9 +152,16 @@ resources for compatibility with recent Docker engines.
 `LedgerCoreIT` repeats ₹1,000 / two simultaneous ₹800 withdrawals ten times,
 races identical requests, sends opposite-direction transfers, injects precommit
 and postcommit failures, verifies database immutability and exercises real login.
-`EventInfrastructureIT` pauses Kafka/Redis, simulates lost publication acknowledgment,
-tests redelivery and durable consumer deduplication. Generated financial sequences
-use fixed seeds for repeatability. [Verification evidence](docs/VERIFICATION.md)
+`FinancialIntegrityIT` exercises real PostgreSQL deadlocks and lock-timeout retries,
+concurrent reversals, durable evidence and multi-currency generated sequences.
+`EventInfrastructureIT` stops/restarts Kafka, simulates lost publication acknowledgment,
+tests redelivery, durable consumer deduplication and poison-event quarantine/replay.
+`ProcessRecoveryIT` terminates a real separate JVM before/after commit and verifies
+fresh-process replay under restricted runtime credentials. `LegacyMigrationIT`
+proves a populated V1 database upgrades safely. jqwik generates and shrinks domain
+properties; ArchUnit prevents circular module/framework dependencies and entity leaks.
+SpotBugs checks bytecode; CycloneDX records runtime dependencies for the OSV scan.
+[Verification evidence](docs/VERIFICATION.md)
 distinguishes executed checks from configured checks. CI is configured; a local
 build is not proof that GitHub Actions ran.
 
@@ -188,15 +201,22 @@ mark cannot be atomic across Kafka/PostgreSQL. The consumer commits its processe
 event ID and audit projection together, then Kafka can acknowledge. Retries
 therefore preserve one projection effect. Kafka does not participate in financial
 posting. The implementation does not promise global event ordering.
+Poison records are retained durably after bounded retries so other records can
+progress. Administrators can inspect quarantine and perform audited replay; see
+[event operations](docs/operations/events.md).
 
 Redis has a 60-second fixed-window rate limit using atomic Lua increment/expiry.
 Authentication fails closed on Redis loss; authenticated financial traffic fails
 open. Redis stores no financial truth. No financial balance cache is used.
 
-This is a single-region educational deployment. Local database credentials own the
-schema for Flyway; production needs separate migration/runtime roles, TLS, managed
-secrets and key rotation, backups/PITR, replication, retention design, external
-security review and incident procedures. Metrics are public inside the local
+This is a single-region educational deployment. Compose separates privileged
+bootstrap/migration jobs from the restricted backend: the running API receives no
+migration credential and cannot perform DDL, truncate or edit immutable history.
+The non-root backend has a read-only filesystem and dropped capabilities.
+Cross-platform [backup/restore tooling](docs/operations/deployment.md) checks dump
+integrity and restores into a disposable database. Production still requires TLS,
+managed secrets, off-host/PITR backups, replication and independent review.
+Metrics are public inside the local
 loopback deployment; restrict their ingress before exposing a deployment.
 JWTs expire after 15 minutes; there is no refresh-token or MFA flow. See
 [threat model](docs/architecture/security.md), [architecture and guarantees](docs/architecture/design.md),
@@ -211,8 +231,7 @@ to actual classes, examples and failure experiments. The
 [interview workbook](docs/learning/interview-questions.md) contains more than 30
 implementation-specific questions and answers.
 
-Next worthwhile extensions are runtime database least privilege, automated
-backup/restore exercises, key rotation with asymmetric signing, measured query
-optimization, bounded reconciliation batches, outbox archival and poison-event
-operations. Add external payment rails only as a separate, explicitly designed
+Next worthwhile extensions are asymmetric key rotation, measured query
+optimization, bounded reconciliation batches, encrypted off-host retention and
+partition-aware archival preserving financial evidence. Add external payment rails only as a separate, explicitly designed
 project; this system is a simulation.

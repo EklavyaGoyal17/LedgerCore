@@ -4,10 +4,23 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # Boot 4 and springdoc 3 require a coordinated framework migration.
+      - dependency-name: org.springframework.boot:spring-boot-starter-parent
+        update-types: [version-update:semver-major]
+      - dependency-name: org.springdoc:springdoc-openapi-starter-webmvc-ui
+        update-types: [version-update:semver-major]
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # Preserve the required Java 21 toolchain; digest updates remain eligible.
+      - dependency-name: eclipse-temurin
+        versions: [">=22"]
+      # Maven tags combine Maven and Java versions. Dependabot numeric ranges
+      # cannot constrain the Java suffix, so review Java 21 builder bumps manually.
+      - dependency-name: maven
   - package-ecosystem: github-actions
     directory: /
     schedule:

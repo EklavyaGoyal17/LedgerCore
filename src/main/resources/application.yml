@@ -8,6 +8,9 @@ spring:
     hikari:
       maximum-pool-size: 16
       connection-timeout: 5000
+  flyway:
+    user: ${MIGRATION_USER:${spring.datasource.username}}
+    password: ${MIGRATION_PASSWORD:${spring.datasource.password}}
   jpa:
     open-in-view: false
     hibernate:
@@ -44,6 +47,7 @@ spring:
       observation-enabled: true
 server:
   port: ${PORT:8080}
+  shutdown: graceful
   error:
     include-message: never
 management:
@@ -88,6 +92,10 @@ ledgercore:
     enabled: ${EVENTS_ENABLED:true}
     topic: ledgercore.events.v1
     poll-ms: 1000
+    consumer-retry-ms: ${CONSUMER_RETRY_MS:1000}
+    consumer-retries: ${CONSUMER_RETRIES:3}
+    publish-wait-seconds: ${PUBLISH_WAIT_SECONDS:12}
+    batch-size: ${OUTBOX_BATCH_SIZE:25}
   rate-limit:
     enabled: ${RATE_LIMIT_ENABLED:true}
     requests-per-minute: ${RATE_LIMIT_PER_MINUTE:120}

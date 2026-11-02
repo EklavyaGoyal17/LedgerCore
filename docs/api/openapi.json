@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "LedgerCore \u00e2\u20ac\u201d SIMULATED financial infrastructure",
+    "title": "LedgerCore \u2014 SIMULATED financial infrastructure",
     "description": "Educational double-entry ledger. No real money or payment rails. Amounts are decimal strings in INR or USD. Monetary POSTs require Idempotency-Key; replay preserves status and JSON values.",
     "version": "1.0.0"
   },
@@ -40,24 +40,119 @@
           "required": true
         },
         "responses": {
+          "400": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Outcome unconfirmed: retry using the original key",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
           "201": {
             "description": "Committed simulated movement; idempotent replay returns the same status and JSON values",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Transfer"
+                },
+                "example": {
+                  "id": "e9851468-07fd-4ab5-aa88-52d1a6bf2ffd",
+                  "actorId": "07483891-f744-49b9-bda5-d7d410191131",
+                  "sourceAccountId": "426ad2c7-167c-42eb-ac3b-715c306cfa09",
+                  "destinationAccountId": "720b6f75-0438-4f93-8717-4f796177c03c",
+                  "amount": "500.00",
+                  "currency": "INR",
+                  "kind": "TRANSFER",
+                  "status": "COMPLETED",
+                  "failureCode": null,
+                  "journalId": "33f1baa0-824b-432b-87cb-ea128e15db83",
+                  "originalTransferId": null,
+                  "createdAt": "2026-11-02T12:00:00Z"
                 }
               }
             }
           },
           "422": {
-            "description": "Insufficient funds: durable Problem Details including transferId. Currency or inactive-account validation also uses 422."
+            "description": "Insufficient funds: durable Problem Details including transferId. Currency or inactive-account validation also uses 422.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
           },
           "409": {
-            "description": "Idempotency payload conflict or original transfer already reversed"
-          },
-          "503": {
-            "description": "Outcome unconfirmed: retry using the original key"
+            "description": "Idempotency payload conflict or original transfer already reversed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -93,24 +188,119 @@
           }
         ],
         "responses": {
+          "400": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Outcome unconfirmed: retry using the original key",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
           "201": {
             "description": "Committed simulated movement; idempotent replay returns the same status and JSON values",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Transfer"
+                },
+                "example": {
+                  "id": "e9851468-07fd-4ab5-aa88-52d1a6bf2ffd",
+                  "actorId": "07483891-f744-49b9-bda5-d7d410191131",
+                  "sourceAccountId": "426ad2c7-167c-42eb-ac3b-715c306cfa09",
+                  "destinationAccountId": "720b6f75-0438-4f93-8717-4f796177c03c",
+                  "amount": "500.00",
+                  "currency": "INR",
+                  "kind": "REVERSAL",
+                  "status": "COMPLETED",
+                  "failureCode": null,
+                  "journalId": "33f1baa0-824b-432b-87cb-ea128e15db83",
+                  "originalTransferId": "6627bfdc-26c5-4a32-8a99-feb5ffb9a042",
+                  "createdAt": "2026-11-02T12:00:00Z"
                 }
               }
             }
           },
           "422": {
-            "description": "Insufficient funds: durable Problem Details including transferId. Currency or inactive-account validation also uses 422."
+            "description": "Insufficient funds: durable Problem Details including transferId. Currency or inactive-account validation also uses 422.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
           },
           "409": {
-            "description": "Idempotency payload conflict or original transfer already reversed"
-          },
-          "503": {
-            "description": "Outcome unconfirmed: retry using the original key"
+            "description": "Idempotency payload conflict or original transfer already reversed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -147,6 +337,76 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
           }
         }
       }
@@ -174,6 +434,76 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/AccessToken"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
                 }
               }
             }
@@ -208,24 +538,119 @@
           "required": true
         },
         "responses": {
+          "400": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Outcome unconfirmed: retry using the original key",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
           "201": {
             "description": "Committed simulated movement; idempotent replay returns the same status and JSON values",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Transfer"
+                },
+                "example": {
+                  "id": "e9851468-07fd-4ab5-aa88-52d1a6bf2ffd",
+                  "actorId": "07483891-f744-49b9-bda5-d7d410191131",
+                  "sourceAccountId": "426ad2c7-167c-42eb-ac3b-715c306cfa09",
+                  "destinationAccountId": "720b6f75-0438-4f93-8717-4f796177c03c",
+                  "amount": "500.00",
+                  "currency": "INR",
+                  "kind": "DEPOSIT",
+                  "status": "COMPLETED",
+                  "failureCode": null,
+                  "journalId": "33f1baa0-824b-432b-87cb-ea128e15db83",
+                  "originalTransferId": null,
+                  "createdAt": "2026-11-02T12:00:00Z"
                 }
               }
             }
           },
           "422": {
-            "description": "Insufficient funds: durable Problem Details including transferId. Currency or inactive-account validation also uses 422."
+            "description": "Insufficient funds: durable Problem Details including transferId. Currency or inactive-account validation also uses 422.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
           },
           "409": {
-            "description": "Idempotency payload conflict or original transfer already reversed"
-          },
-          "503": {
-            "description": "Outcome unconfirmed: retry using the original key"
+            "description": "Idempotency payload conflict or original transfer already reversed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -248,6 +673,192 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/Report"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/events/quarantine/{id}/replays": {
+      "post": {
+        "tags": [
+          "event-operations-controller"
+        ],
+        "operationId": "replay",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Replay"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailedEvent"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
                 }
               }
             }
@@ -302,6 +913,76 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -332,6 +1013,76 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/View"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
                 }
               }
             }
@@ -371,6 +1122,183 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/journals/{id}": {
+      "get": {
+        "tags": [
+          "journal-controller"
+        ],
+        "summary": "Inspect the immutable balanced journal for an account participant or administrator",
+        "operationId": "get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/View"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -385,7 +1313,7 @@
         "tags": [
           "reconciliation-controller"
         ],
-        "operationId": "get",
+        "operationId": "get_1",
         "parameters": [
           {
             "name": "id",
@@ -407,6 +1335,302 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/events/quarantine": {
+      "get": {
+        "tags": [
+          "event-operations-controller"
+        ],
+        "operationId": "list_1",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 25
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FailedEvent"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/admin/events/quarantine/{id}": {
+      "get": {
+        "tags": [
+          "event-operations-controller"
+        ],
+        "operationId": "get_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailedEvent"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -421,7 +1645,7 @@
         "tags": [
           "account-controller"
         ],
-        "operationId": "get_1",
+        "operationId": "get_3",
         "parameters": [
           {
             "name": "id",
@@ -440,6 +1664,76 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/View"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
                 }
               }
             }
@@ -503,6 +1797,76 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -536,6 +1900,76 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/Balance"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Problem Details; consult code and correlationId",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerProblem"
                 }
               }
             }
@@ -688,6 +2122,58 @@
           },
           "status": {
             "type": "string"
+          }
+        }
+      },
+      "Replay": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "payload": {
+            "type": "string",
+            "maxLength": 65536,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "FailedEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "partition": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "payload": {
+            "type": "string"
+          },
+          "errorCategory": {
+            "type": "string"
+          },
+          "quarantinedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -854,6 +2340,39 @@
           },
           "source": {
             "type": "string"
+          }
+        }
+      },
+      "LedgerProblem": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "urn:ledgercore:problem:insufficient_funds"
+          },
+          "title": {
+            "type": "string",
+            "example": "INSUFFICIENT_FUNDS"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "example": 422
+          },
+          "detail": {
+            "type": "string",
+            "example": "Available funds are insufficient"
+          },
+          "code": {
+            "type": "string",
+            "example": "INSUFFICIENT_FUNDS"
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "transferId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       }

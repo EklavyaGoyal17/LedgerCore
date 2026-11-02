@@ -1,11 +1,19 @@
 # Database design, isolation and query behavior
 
-`V1__financial_core.sql` contains all schema and trigger definitions. Tables use UUID
-primary keys, explicit FKs, supported-currency checks and database timestamps.
+`V1__financial_core.sql` defines the original financial schema and posting guards.
+`V2__financial_integrity.sql` adds durable outcome/replay, audit and event-evidence
+constraints. `V3__event_operations.sql` adds quarantine and immutable replay audit;
+`R__runtime_privileges.sql` applies the restricted runtime grants. The Compose
+bootstrap establishes the separate migration/runtime roles before migration.
+Tables use UUID primary keys, explicit FKs, supported-currency checks and database timestamps.
 Monetary fields use bigint minor units; a single operation is capped at
 1,000,000,000,000 minor units. PostgreSQL SUM(bigint) produces numeric. Aggregate
 balance conversion to bigint fails rather than silently wrapping if an extreme
-balance exceeds the representation; operational limits are needed before such scale.
+aggregate exceeds the representation. Financial posting checks destination overflow
+before constructing a journal and commits a durable `422 BALANCE_LIMIT_EXCEEDED`
+outcome instead of overflowing its customer projection. Settlement totals and
+cross-account aggregates still require care when converting PostgreSQL numeric
+sums to bounded application integers.
 
 ## Concurrency timeline
 
@@ -41,7 +49,7 @@ whole-transaction retry. Bounded attempts avoid permanent retry storms.
 |---|---|
 | `financial_accounts_owner(owner_id,created_at,id)` | owner account list, ordered pagination |
 | `journal_entries_journal(journal_id)` | journal balance checks and journal lookup |
-| `journal_entries_statement(ledger_account_id,created_at,id)` | account ledger history, running balance window |
+| `journal_entries_statement(ledger_account_id,created_at,id)` | account ledger-entry lookup; statement ordering by journal posting time still requires a sort |
 | unique `(principal_id,operation,key)` | durable request reservation/replay |
 | unique partial `one_completed_reversal` | one compensating reversal per original |
 | transfer source/destination indexes | participant history / investigation |

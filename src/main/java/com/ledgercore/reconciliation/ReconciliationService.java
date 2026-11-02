@@ -47,65 +47,118 @@ public class ReconciliationService {
     check(
         errors,
         "UNBALANCED_JOURNAL",
-        "SELECT j.id FROM journal_transactions j LEFT JOIN journal_entries e ON e.journal_id=j.id GROUP BY j.id HAVING count(e.id)<2 OR coalesce(sum(e.debit_minor),0)<>coalesce(sum(e.credit_minor),0)");
+        "SELECT j.id FROM journal_transactions j LEFT JOIN journal_entries e ON e.journal_id=j.id"
+            + " GROUP BY j.id HAVING count(e.id)<2 OR"
+            + " coalesce(sum(e.debit_minor),0)<>coalesce(sum(e.credit_minor),0)");
     check(
         errors,
         "PROJECTION_MISMATCH",
-        "SELECT a.id FROM financial_accounts a LEFT JOIN journal_entries e ON e.ledger_account_id=a.ledger_account_id GROUP BY a.id HAVING a.balance_minor<>coalesce(sum(e.credit_minor-e.debit_minor),0) OR a.balance_minor<0");
+        "SELECT a.id FROM financial_accounts a LEFT JOIN journal_entries e ON"
+            + " e.ledger_account_id=a.ledger_account_id GROUP BY a.id HAVING"
+            + " a.balance_minor<>coalesce(sum(e.credit_minor-e.debit_minor),0) OR"
+            + " a.balance_minor<0");
     check(
         errors,
         "CURRENCY_MISMATCH",
-        "SELECT DISTINCT j.id FROM journal_transactions j JOIN journal_entries e ON e.journal_id=j.id JOIN ledger_accounts l ON l.id=e.ledger_account_id WHERE j.currency<>l.currency");
+        "SELECT DISTINCT j.id FROM journal_transactions j JOIN journal_entries e ON"
+            + " e.journal_id=j.id JOIN ledger_accounts l ON l.id=e.ledger_account_id WHERE"
+            + " j.currency<>l.currency");
     check(
         errors,
         "ACCOUNT_MAPPING",
-        "SELECT a.id FROM financial_accounts a JOIN ledger_accounts l ON l.id=a.ledger_account_id WHERE a.currency<>l.currency OR l.classification<>'LIABILITY'");
+        "SELECT a.id FROM financial_accounts a JOIN ledger_accounts l ON l.id=a.ledger_account_id"
+            + " WHERE a.currency<>l.currency OR l.classification<>'LIABILITY'");
     check(
         errors,
         "ORPHAN_JOURNAL",
-        "SELECT j.id FROM journal_transactions j LEFT JOIN transfers t ON t.journal_id=j.id WHERE t.id IS NULL OR t.status<>'COMPLETED'");
+        "SELECT j.id FROM journal_transactions j LEFT JOIN transfers t ON t.journal_id=j.id WHERE"
+            + " t.id IS NULL OR t.status<>'COMPLETED'");
     check(
         errors,
         "TRANSFER_POSTING_MISMATCH",
         """
-      SELECT t.id FROM transfers t
-      LEFT JOIN journal_transactions j ON j.id=t.journal_id
-      LEFT JOIN financial_accounts s ON s.id=t.source_id
-      JOIN financial_accounts d ON d.id=t.destination_id
-      WHERE (t.status='COMPLETED' AND (j.id IS NULL OR j.kind<>t.kind OR j.currency<>t.currency
+SELECT t.id FROM transfers t
+LEFT JOIN journal_transactions j ON j.id=t.journal_id
+LEFT JOIN financial_accounts s ON s.id=t.source_id
+JOIN financial_accounts d ON d.id=t.destination_id
+WHERE (t.status='COMPLETED' AND (j.id IS NULL OR j.kind<>t.kind OR j.currency<>t.currency
+  OR d.currency<>t.currency OR (s.id IS NOT NULL AND s.currency<>t.currency)
+  OR (SELECT count(*) FROM journal_entries WHERE journal_id=j.id)<>2
+  OR NOT EXISTS (SELECT 1 FROM journal_entries e WHERE e.journal_id=j.id AND e.debit_minor=t.amount_minor AND e.credit_minor=0
+    AND e.ledger_account_id=coalesce(s.ledger_account_id,(SELECT id FROM ledger_accounts WHERE identifier='SIMULATED-SETTLEMENT-'||t.currency)))
+  OR NOT EXISTS (SELECT 1 FROM journal_entries e WHERE e.journal_id=j.id AND e.credit_minor=t.amount_minor AND e.debit_minor=0 AND e.ledger_account_id=d.ledger_account_id)))
+  OR (t.status='FAILED' AND t.journal_id IS NOT NULL)
         OR d.currency<>t.currency OR (s.id IS NOT NULL AND s.currency<>t.currency)
-        OR (SELECT count(*) FROM journal_entries WHERE journal_id=j.id)<>2
-        OR NOT EXISTS (SELECT 1 FROM journal_entries e WHERE e.journal_id=j.id AND e.debit_minor=t.amount_minor AND e.credit_minor=0
-          AND e.ledger_account_id=coalesce(s.ledger_account_id,(SELECT id FROM ledger_accounts WHERE identifier='SIMULATED-SETTLEMENT-'||t.currency)))
-        OR NOT EXISTS (SELECT 1 FROM journal_entries e WHERE e.journal_id=j.id AND e.credit_minor=t.amount_minor AND e.debit_minor=0 AND e.ledger_account_id=d.ledger_account_id)))
-        OR (t.status='FAILED' AND t.journal_id IS NOT NULL)
-      """);
+""");
     check(
         errors,
         "INVALID_REVERSAL",
         """
-      SELECT r.id FROM transfers r LEFT JOIN transfers o ON o.id=r.original_transfer_id
-      LEFT JOIN journal_transactions j ON j.id=r.journal_id
-      WHERE r.kind='REVERSAL' AND r.status='COMPLETED' AND
-        (o.id IS NULL OR o.status<>'COMPLETED' OR o.kind<>'TRANSFER' OR r.source_id<>o.destination_id
-         OR r.destination_id<>o.source_id OR r.amount_minor<>o.amount_minor OR r.currency<>o.currency
-         OR j.original_journal_id IS DISTINCT FROM o.journal_id)
-      """);
+SELECT r.id FROM transfers r LEFT JOIN transfers o ON o.id=r.original_transfer_id
+LEFT JOIN journal_transactions j ON j.id=r.journal_id
+      WHERE r.kind='REVERSAL' AND
+  (o.id IS NULL OR o.status<>'COMPLETED' OR o.kind<>'TRANSFER' OR r.source_id<>o.destination_id
+   OR r.destination_id<>o.source_id OR r.amount_minor<>o.amount_minor OR r.currency<>o.currency
+         OR (r.status='COMPLETED' AND j.original_journal_id IS DISTINCT FROM o.journal_id))
+""");
     check(
         errors,
         "UNFINISHED_IDEMPOTENCY",
         "SELECT id FROM idempotency_records WHERE state<>'FINISHED'");
     check(
         errors,
+        "IDEMPOTENCY_OUTCOME_MISMATCH",
+        """
+SELECT t.id FROM transfers t LEFT JOIN idempotency_records i ON i.id=t.idempotency_reference
+LEFT JOIN journal_transactions j ON j.id=t.journal_id
+WHERE i.id IS NULL OR i.principal_id<>t.actor_id OR i.state<>'FINISHED'
+  OR i.operation IS DISTINCT FROM CASE t.kind WHEN 'TRANSFER' THEN 'transfer'
+    WHEN 'DEPOSIT' THEN 'simulated-deposit' ELSE 'reversal:'||t.original_transfer_id::text END
+  OR (t.status='COMPLETED' AND (i.response_status<>201
+    OR i.response_body->>'id' IS DISTINCT FROM t.id::text
+    OR i.response_body->>'journalId' IS DISTINCT FROM t.journal_id::text
+    OR i.response_body->>'status' IS DISTINCT FROM t.status
+          OR i.response_body->>'actorId' IS DISTINCT FROM t.actor_id::text
+          OR i.response_body->>'sourceAccountId' IS DISTINCT FROM t.source_id::text
+          OR i.response_body->>'destinationAccountId' IS DISTINCT FROM t.destination_id::text
+          OR i.response_body->>'kind' IS DISTINCT FROM t.kind
+          OR i.response_body->>'originalTransferId' IS DISTINCT FROM t.original_transfer_id::text
+    OR i.response_body->>'currency' IS DISTINCT FROM t.currency
+    OR i.response_body->>'amount' IS DISTINCT FROM to_char(t.amount_minor::numeric/100,'FM99999999999999999990.00')
+    OR j.idempotency_reference IS DISTINCT FROM i.id))
+  OR (t.status='FAILED' AND (i.response_status<>422
+    OR i.response_body->>'transferId' IS DISTINCT FROM t.id::text
+    OR i.response_body->>'code' IS DISTINCT FROM t.failure_code))
+""");
+    check(
+        errors,
+        "ORPHAN_FINANCIAL_IDEMPOTENCY",
+        "SELECT i.id FROM idempotency_records i WHERE (i.operation IN"
+            + " ('transfer','simulated-deposit') OR i.operation LIKE 'reversal:%') AND NOT EXISTS"
+            + " (SELECT 1 FROM transfers t WHERE t.idempotency_reference=i.id)");
+    check(
+        errors,
         "MISSING_FINANCIAL_EVENT",
-        "SELECT t.id FROM transfers t WHERE NOT EXISTS (SELECT 1 FROM outbox_events o WHERE o.aggregate_id=t.id)");
+        """
+SELECT t.id FROM transfers t WHERE NOT EXISTS (SELECT 1 FROM outbox_events o WHERE o.aggregate_id=t.id
+  AND o.event_type=CASE WHEN t.status='FAILED' THEN 'TransferFailed' WHEN t.kind='TRANSFER' THEN 'TransferCompleted'
+    WHEN t.kind='DEPOSIT' THEN 'SimulatedDepositCompleted' ELSE 'ReversalCompleted' END
+  AND o.payload->>'aggregateId'=t.id::text AND o.payload->>'eventId'=o.id::text
+  AND o.payload->>'eventType'=o.event_type)
+""");
     check(
         errors,
         "MISSING_FINANCIAL_AUDIT",
-        "SELECT t.id FROM transfers t WHERE NOT EXISTS (SELECT 1 FROM audit_events a WHERE a.resource_id=t.id)");
+        """
+SELECT t.id FROM transfers t WHERE NOT EXISTS (SELECT 1 FROM audit_events a WHERE a.resource_id=t.id
+  AND a.actor_id=t.actor_id AND a.action=CASE WHEN t.status='FAILED' THEN 'TransferFailed'
+    WHEN t.kind='TRANSFER' THEN 'TransferCompleted' WHEN t.kind='DEPOSIT' THEN 'SimulatedDepositCompleted' ELSE 'ReversalCompleted' END)
+""");
     long checked =
         db.queryForObject(
-            "SELECT (SELECT count(*) FROM journal_transactions)+(SELECT count(*) FROM financial_accounts)+(SELECT count(*) FROM transfers)+(SELECT count(*) FROM idempotency_records)",
+            "SELECT (SELECT count(*) FROM journal_transactions)+(SELECT count(*) FROM"
+                + " financial_accounts)+(SELECT count(*) FROM transfers)+(SELECT count(*) FROM"
+                + " idempotency_records)",
             Long.class);
     Report result =
         new Report(
@@ -116,7 +169,9 @@ public class ReconciliationService {
             List.copyOf(errors),
             errors.isEmpty() ? "CLEAN" : "DISCREPANCIES");
     db.update(
-        "INSERT INTO reconciliation_runs(id,started_at,finished_at,records_checked,discrepancies,status) VALUES (?,?,?,?,?::jsonb,?)",
+        "INSERT INTO"
+            + " reconciliation_runs(id,started_at,finished_at,records_checked,discrepancies,status)"
+            + " VALUES (?,?,?,?,?::jsonb,?)",
         result.id(),
         java.sql.Timestamp.from(start),
         java.sql.Timestamp.from(result.finishedAt()),

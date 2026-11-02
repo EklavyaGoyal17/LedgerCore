@@ -2,16 +2,23 @@
   "uid": "ledgercore",
   "title": "LedgerCore simulation \u2014 financial operations",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "5s",
   "time": {
     "from": "now-30m",
     "to": "now"
   },
+  "tags": [
+    "ledgercore",
+    "simulation",
+    "financial-correctness"
+  ],
+  "timezone": "browser",
   "panels": [
     {
       "id": 1,
-      "title": "HTTP request duration (mean seconds)",
+      "title": "HTTP latency p95 / p99",
+      "description": "Five-minute histogram estimates across API routes, excluding actuator traffic. Empty/NaN means insufficient observations; this is not a zero-latency result.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -25,21 +32,39 @@
       },
       "targets": [
         {
-          "expr": "rate(http_server_requests_seconds_sum[5m]) / rate(http_server_requests_seconds_count[5m])",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"ledgercore\",uri!~\"/actuator.*\"}[5m])))",
           "refId": "A",
-          "legendFormat": "{{outcome}}"
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"ledgercore\",uri!~\"/actuator.*\"}[5m])))",
+          "refId": "B",
+          "legendFormat": "p99"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          }
         },
         "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
       }
     },
     {
       "id": 2,
-      "title": "Committed financial outcomes per second",
+      "title": "Financial command latency p95 / p99",
+      "description": "Includes transfer, deposit and reversal engine calls, including replay/retry time. Financial command histogram; not Kafka delivery latency.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -53,21 +78,39 @@
       },
       "targets": [
         {
-          "expr": "sum by(outcome) (rate(ledgercore_transfer_committed_total[5m]))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(ledgercore_transfer_duration_seconds_bucket{job=\"ledgercore\"}[5m])))",
           "refId": "A",
-          "legendFormat": "{{outcome}}"
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(ledgercore_transfer_duration_seconds_bucket{job=\"ledgercore\"}[5m])))",
+          "refId": "B",
+          "legendFormat": "p99"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "ops"
+          "unit": "s",
+          "color": {
+            "mode": "palette-classic"
+          }
         },
         "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
       }
     },
     {
       "id": 3,
-      "title": "HTTP throughput",
+      "title": "API requests per second",
+      "description": "",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -81,21 +124,34 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(http_server_requests_seconds_count[5m]))",
+          "expr": "sum by (method) (rate(http_server_requests_seconds_count{job=\"ledgercore\",uri!~\"/actuator.*\"}[5m]))",
           "refId": "A",
-          "legendFormat": "{{outcome}}"
+          "legendFormat": "{{method}}"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps"
+          "unit": "reqps",
+          "color": {
+            "mode": "palette-classic"
+          }
         },
         "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
       }
     },
     {
       "id": 4,
-      "title": "Database pool utilization",
+      "title": "HTTP server error ratio",
+      "description": "5xx only. Expected business rejections such as insufficient funds are tracked separately as committed failed financial outcomes.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -109,21 +165,34 @@
       },
       "targets": [
         {
-          "expr": "hikaricp_connections_active / hikaricp_connections_max",
+          "expr": "(sum(rate(http_server_requests_seconds_count{job=\"ledgercore\",status=~\"5..\"}[5m])) or vector(0)) / clamp_min(sum(rate(http_server_requests_seconds_count{job=\"ledgercore\"}[5m])),0.001)",
           "refId": "A",
-          "legendFormat": "{{outcome}}"
+          "legendFormat": "5xx ratio"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit"
+          "unit": "percentunit",
+          "color": {
+            "mode": "palette-classic"
+          }
         },
         "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
       }
     },
     {
       "id": 5,
-      "title": "Pending outbox",
+      "title": "Durable financial outcomes / second",
+      "description": "Counters increment after PostgreSQL commit. Idempotent response replays do not produce another committed outcome.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -137,21 +206,34 @@
       },
       "targets": [
         {
-          "expr": "ledgercore_outbox_pending",
+          "expr": "sum by (outcome,category) (rate(ledgercore_transfer_committed_total{job=\"ledgercore\"}[5m]))",
           "refId": "A",
-          "legendFormat": "{{outcome}}"
+          "legendFormat": "{{outcome}} / {{category}}"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          }
         },
         "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
       }
     },
     {
       "id": 6,
-      "title": "Publication failures per second",
+      "title": "Committed financial rejection ratio",
+      "description": "A high value can reflect intentional insufficient-funds load. Assess safe category labels and HTTP errors separately.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -165,21 +247,34 @@
       },
       "targets": [
         {
-          "expr": "rate(ledgercore_outbox_publication_failures_total[5m])",
+          "expr": "(sum(rate(ledgercore_transfer_committed_total{job=\"ledgercore\",outcome=\"failed\"}[5m])) or vector(0)) / clamp_min(sum(rate(ledgercore_transfer_committed_total{job=\"ledgercore\"}[5m])),0.001)",
           "refId": "A",
-          "legendFormat": "{{outcome}}"
+          "legendFormat": "business rejection ratio"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "ops"
+          "unit": "percentunit",
+          "color": {
+            "mode": "palette-classic"
+          }
         },
         "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
       }
     },
     {
       "id": 7,
-      "title": "Reconciliation discrepancies",
+      "title": "Durable pending outbox events",
+      "description": "PostgreSQL rows lacking publication acknowledgment. A broker outage can increase this count while financial posting remains correct.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -193,22 +288,35 @@
       },
       "targets": [
         {
-          "expr": "ledgercore_reconciliation_discrepancies_total",
+          "expr": "ledgercore_outbox_pending{job=\"ledgercore\"}",
           "refId": "A",
-          "legendFormat": "{{outcome}}"
+          "legendFormat": "{{instance}}"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          }
         },
         "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
       }
     },
     {
       "id": 8,
-      "title": "Kafka maximum consumer lag",
-      "type": "timeseries",
+      "title": "Unresolved consumer quarantine",
+      "description": "Durable failed consumer effects requiring investigation/replay. This can remain positive after the outbox drains. Never interpret empty outbox as complete consumer success.",
+      "type": "stat",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -221,17 +329,287 @@
       },
       "targets": [
         {
-          "expr": "kafka_consumer_fetch_manager_records_lag_max",
+          "expr": "ledgercore_events_quarantined{job=\"ledgercore\"}",
           "refId": "A",
-          "legendFormat": "{{outcome}}"
+          "legendFormat": "{{instance}}"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          }
         },
         "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area"
       }
+    },
+    {
+      "id": 9,
+      "title": "Unconfirmed Kafka publications / second",
+      "description": "A timeout can precede late broker acceptance. Consumers deduplicate any resulting delivery repetitions.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(ledgercore_outbox_publication_failures_total{job=\"ledgercore\"}[5m]))",
+          "refId": "A",
+          "legendFormat": "publication failures"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Kafka maximum consumer lag",
+      "description": "Kafka client fetch lag, available after partition assignment. Missing series means telemetry is unavailable, not zero lag. Does not count quarantined records.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "max by (client_id) (kafka_consumer_fetch_manager_records_lag_max{job=\"ledgercore\"})",
+          "refId": "A",
+          "legendFormat": "{{client_id}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Database pool utilization",
+      "description": "Active/max connections. Check row locks and long publication waits before changing pool capacity.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 40,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "hikaricp_connections_active{job=\"ledgercore\"} / hikaricp_connections_max{job=\"ledgercore\"}",
+          "refId": "A",
+          "legendFormat": "{{pool}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "Database callers awaiting a connection",
+      "description": "Sustained nonzero pending callers identify pool contention; this is different from rows blocked on PostgreSQL locks.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 40,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "hikaricp_connections_pending{job=\"ledgercore\"}",
+          "refId": "A",
+          "legendFormat": "{{pool}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "title": "Reconciliation discrepancy observations",
+      "description": "Cumulative observations from reconciliation runs, not a current unresolved count. Inspect the persisted report; do not repair financial history silently.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 48,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "ledgercore_reconciliation_discrepancies_total{job=\"ledgercore\"}",
+          "refId": "A",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "title": "Backend scrape health",
+      "description": "Prometheus target health. Missing time series differs from a numeric zero; investigate service discovery or Prometheus itself.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 48,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "up{job=\"ledgercore\"}",
+          "refId": "A",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      }
+    }
+  ],
+  "links": [
+    {
+      "title": "Tempo trace explorer",
+      "type": "link",
+      "url": "/explore?schemaVersion=1&panes=%7B%22trace%22%3A%7B%22datasource%22%3A%22tempo%22%7D%7D",
+      "targetBlank": true
     }
   ]
 }

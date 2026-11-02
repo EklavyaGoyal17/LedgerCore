@@ -70,11 +70,12 @@ preserves permanent uniqueness. Tests move the horizon into the past and verify
 that replay still works. Replay preserves status and JSON values; PostgreSQL JSONB
 may reorder properties and whitespace. New request correlation headers can differ.
 
-All ordinary financial entry points use the same locking protocol. Database owners
-can disable triggers; production must separate the migration owner from a restricted
-runtime role. These constraints defend ordinary application DML, not a malicious
-superuser or physical storage corruption. Reconciliation is an independent detective
-control; it never repairs money automatically.
+All ordinary financial entry points use the same locking protocol. Compose separates
+the migration owner from a restricted runtime role and keeps privileged credentials
+out of the running API process. Only the migration job can alter trigger definitions
+or perform a controlled legacy backfill. These constraints defend ordinary
+application DML, not a malicious superuser or physical storage corruption.
+Reconciliation is an independent detective control; it never repairs money automatically.
 
 Outbox workers hold one row lock while waiting (bounded) for broker acknowledgment.
 `SKIP LOCKED` allows multiple workers. This simple implementation prioritizes

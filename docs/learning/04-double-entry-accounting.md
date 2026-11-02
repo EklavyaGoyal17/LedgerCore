@@ -1,37 +1,88 @@
-# Double-entry accounting
+# Double-entry accounting and exact money
 
-## Concept in plain English
+## Concept and purpose
 
-Every financial movement records equal debits and credits across accounting accounts. Debit and credit describe direction, not inherently good/bad or plus/minus.
+Every posted movement has equal debit and credit totals. Debit and credit are
+accounting directions; their effect depends on the account's classification.
+Customer balances are credit-normal liabilities because the simulated platform
+owes those balances to customers. The settlement offset is a debit-normal asset.
+This representation explains where every balance came from and permits an
+independent reconstruction after a projection is damaged.
 
-## Why backend engineers need it
+## Follow a concrete sequence
 
-Independent counterpart entries reveal missing sides and allow a durable explanation of each customer balance.
+Start with empty INR accounts A and B. Fund A with 1000 and transfer 300 to B.
 
-## LedgerCore implementation
+| Journal | Account | Debit | Credit | Customer effect |
+|---|---|---:|---:|---|
+| Simulated deposit | INR settlement asset | 1000 | 0 | offsetting asset increases |
+| Simulated deposit | A liability | 0 | 1000 | A becomes 1000 |
+| Transfer | A liability | 300 | 0 | A becomes 700 |
+| Transfer | B liability | 0 | 300 | B becomes 300 |
 
-Customer funds are credit-normal liabilities. Funding debits a debit-normal settlement asset. Journals are immutable and validated both in Java and by deferred PostgreSQL triggers.
+A's authoritative balance is the sum of posted credits minus debits on its mapped
+liability ledger. An internal transfer preserves total customer liabilities;
+a deposit increases them with a matching settlement-asset debit. Do not sum
+INR and USD amounts into one economic total without an exchange-rate model.
+LedgerCore deliberately provides no foreign exchange operation.
 
-## Relevant files and classes
+## Implementation and defenses
 
-`ledger/domain/Journal.java`, `ledger/JournalPosting.java`, `accounts/AccountService.balance`, `V1__financial_core.sql`.
+Read `Money`, `Journal`, `JournalPosting`, `AccountService.balance`, and both
+financial migrations. `Money.parse` uses `BigDecimal` only for exact conversion,
+requires a two-decimal representation without rounding away fractions, and stores
+integer minor units. It rejects unsupported currencies, zero/negative values,
+fractional minor units, and values above the operation cap. `Journal` uses a
+`BigInteger` accumulator so validating many large entries cannot wrap a `long`.
 
-## Concrete example
+The database requires one positive side per entry and a balanced journal with at
+least two entries. The transfer check additionally requires exactly the expected
+two postings, amount, currencies, participants, and original reference for a
+compensation. A valid balanced journal can still represent the wrong payment;
+these checks protect economic intent in addition to arithmetic.
 
-A 500 INR transfer debits A liability 50000 and credits B liability 50000. A decreases while B increases. A reversal swaps these directions in a new journal.
+Customer projections are updated in the same transaction as entries and checked
+against the authoritative sum by deferred triggers. The destination overflow
+check rejects a credit that would exceed `Long.MAX_VALUE`, recording
+`BALANCE_LIMIT_EXCEEDED` without posting. Redis never supplies a spendable balance.
 
-## Common mistakes
+## Corrections and immutable history
 
-Treating debit as always increasing balance, using double for money, balancing across mixed currencies, or correcting old entries destroys useful accounting guarantees.
+A completed ordinary transfer can be compensated by an administrator through a
+new reversal transfer and journal. The original stays unchanged. The recipient
+must still have enough available funds; a reversal cannot manufacture an
+unauthorized overdraft. A unique constraint permits one successful compensation
+per original, while failed attempts remain auditable.
 
-## Failure scenario
+`created_xid` prevents appending an entry to an already committed journal.
+Triggers reject updates/deletes of journals and entries. V2 connects the terminal
+outcome to its replay record, audit, and immutable financial event. The runtime
+role cannot bypass these rules by disabling triggers or truncating history.
 
-A balanced journal can still debit the wrong account. verify_transfer checks exact source/destination/amount shape, and reconciliation independently repeats that comparison.
+## Evidence, failures, and questions
 
-## Interview question and answer
+`FinancialPropertiesTest` generates 1000 examples for each domain property:
+amount formatting/parsing round trips, exact split counterpart journals, and
+rejection of fractional minor units. jqwik can shrink a falsifying example to a
+smaller case and report a seed for reproduction. Those pure properties complement
+`FinancialIntegrityIT`'s seeded PostgreSQL operation sequences; they do not
+exercise locks or database commit behavior by themselves. See the [jqwik guide](https://jqwik.net/docs/1.9.3/user-guide.html).
 
-Does double entry prove the transfer was authorized? No. Accounting balance, economic intent and authorization are separate invariants.
+- **Can balanced entries prove authorization?** No. Authentication, source
+  ownership, administrative privileges, and accounting consistency are distinct.
+- **Why not overwrite the original with a corrected amount?** It removes the
+  explanation of earlier statements and events. A new compensation preserves it.
+- **Does a failed transfer need entries?** No. It needs a durable rejected outcome,
+  replay metadata, audit, and event; creating money entries would misstate it.
 
-## Further learning exercise
+Common mistakes include interpreting every debit as an increase, rounding `0.001`
+into an accepted request, using floating-point amounts, balancing unlike
+currencies, and treating a projection as an independent mutable balance.
 
-Add a three-entry balanced journal domain test. Compute customer liabilities before and after an internal transfer and after a simulated deposit.
+## Practical exercise
+
+Run `mvn -Dtest=FinancialPropertiesTest test`, then the financial integration suite.
+Compute A and B's balances from entries after the sequence above and after its
+reversal. Show that each journal balances and total customer liabilities remain
+1000. Change one counterpart by one minor unit in a local domain test and inspect
+the minimized failure rather than editing persisted journal history.

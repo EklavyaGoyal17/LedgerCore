@@ -55,7 +55,7 @@ cache. Seven-day expiry metadata never releases a financial key. Redis provides
 atomic rate limiting only; authentication fails closed during its outage and
 authenticated business operations fail open. Outbox delivery is at least once,
 with idempotent consumer effects; no end-to-end exactly-once or global ordering
-claim is made. Eight ADRs describe rejected alternatives and their costs.
+claim is made. Nine ADRs describe rejected alternatives and their costs.
 
 ## Run and verify
 
@@ -71,11 +71,14 @@ BASE_URL accordingly for the demo. [VERIFICATION.md](VERIFICATION.md) contains e
 PowerShell setup and fresh-clone distinctions. Swagger is at
 http://localhost:8088/swagger-ui/index.html; Grafana at http://localhost:3000.
 
-Clean verification passed **44 tests with no failures/errors/skips** and produced
-**88.40% JaCoCo instruction coverage**. The complete Compose stack started, API
-acceptance passed, five k6 modes passed short smoke runs, live telemetry was checked
-and actual query plans were captured. GitHub Actions is configured but was not run
-remotely. Dependency vulnerability scanning and sustained benchmarking were not run.
+The expanded clean verification covers domain, architecture, generated properties,
+real PostgreSQL/Kafka/Redis, populated-schema upgrades and separate-JVM crash
+recovery. SpotBugs, runtime SBOM generation and OSV advisory checking are part of
+delivery. The Compose deployment, API acceptance, measured k6 workloads,
+logical backup/restore and connected HTTP-to-Kafka trace checks have reproducible
+commands and evidence. Current totals and remote CI results are recorded in
+[VERIFICATION.md](VERIFICATION.md); historical smoke results are not substituted
+for sustained workload measurements.
 
 ## Study roadmap and interview preparation
 
@@ -83,15 +86,17 @@ Study exact money and journal validation first, then migration constraints, tran
 transactions and key reservation. Run the PostgreSQL races and compare them to the
 lock timeline. Continue through JWT/ownership, outbox acknowledgment loss, consumer
 deduplication and reconciliation fixtures. Use [the 14-guide roadmap](learning/README.md)
-and [44 implementation-specific questions with answers](learning/interview-questions.md)
+and [the implementation-specific questions with answers](learning/interview-questions.md)
 to rehearse a code walkthrough and explain evidence for each guarantee.
 
 ## Limits and further work
 
 The detailed threat model and verification limits are documented. This local system
 is not a certified or highly available banking deployment. Meaningful next steps
-are separate migration/runtime database roles, restore/failover exercises, asymmetric
-key rotation, measured query tuning and checkpoints, bounded reconciliation reports,
-outbox/key archival preserving uniqueness, and a poison-event operations workflow.
+are asymmetric key rotation, encrypted off-host/PITR backup policy, multi-node
+failover, measured query tuning and checkpoints, bounded reconciliation reports,
+and archival preserving permanent financial uniqueness. Separate migration/runtime
+processes, actual JVM recovery, logical restore drills and audited poison-event
+operations are implemented.
 Those extensions should preserve the existing financial invariants and add evidence
 for new guarantees before being presented as operationally ready.

@@ -1,0 +1,51 @@
+groups:
+  - name: ledgercore.financial_operations
+    rules:
+      - alert: LedgerCoreBackendUnavailable
+        expr: up{job="ledgercore"} == 0
+        for: 1m
+        labels: {severity: critical}
+        annotations:
+          summary: LedgerCore backend cannot be scraped
+          description: Investigate backend availability and Prometheus connectivity. No application metric can be trusted as current while this target is down.
+      - alert: LedgerCoreOutboxBacklog
+        expr: ledgercore_outbox_pending{job="ledgercore"} > 0
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: Durable events have remained unpublished for five minutes
+          description: Financial posting may remain healthy. Inspect Kafka availability, publication failures and due retry times; never delete outbox evidence to clear this alert.
+      - alert: LedgerCoreConsumerQuarantine
+        expr: ledgercore_events_quarantined{job="ledgercore"} > 0
+        for: 1m
+        labels: {severity: warning}
+        annotations:
+          summary: Failed consumer effects require administrator investigation
+          description: Original events are durably quarantined and partition progress can continue. An empty outbox or zero Kafka lag does not resolve this alert; use the audited replay workflow.
+      - alert: LedgerCoreHttpServerErrors
+        expr: sum(rate(http_server_requests_seconds_count{job="ledgercore",status=~"5.."}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count{job="ledgercore"}[5m])),0.001) > 0.05 and sum(increase(http_server_requests_seconds_count{job="ledgercore"}[5m])) > 20
+        for: 2m
+        labels: {severity: warning}
+        annotations:
+          summary: HTTP server errors exceed five percent with meaningful traffic
+          description: Inspect correlation IDs, traces and database contention. Expected financial business rejections are separate from HTTP 5xx failures.
+      - alert: LedgerCoreDatabasePoolContention
+        expr: hikaricp_connections_pending{job="ledgercore"} > 0
+        for: 2m
+        labels: {severity: warning}
+        annotations:
+          summary: Requests are waiting for database connections
+          description: Inspect PostgreSQL lock waits, long transactions and publisher network waits before increasing the connection pool.
+      - alert: LedgerCoreReconciliationDiscrepancy
+        expr: increase(ledgercore_reconciliation_discrepancies_total{job="ledgercore"}[10m]) > 0
+        labels: {severity: critical}
+        annotations:
+          summary: A reconciliation run reported discrepancies
+          description: Preserve the run report and affected financial references. Investigate journal, transfer, projection and event evidence; use compensating financial operations for corrections.
+      - alert: LedgerCoreConsumerLag
+        expr: kafka_consumer_fetch_manager_records_lag_max{job="ledgercore"} > 100
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: A Kafka consumer has sustained fetch lag above 100 records
+          description: Inspect consumer progress and failures. Missing lag telemetry does not imply zero lag, and successfully quarantined records no longer appear in this lag measurement.

@@ -176,7 +176,86 @@ implemented system, not a hypothetical bank deployment.
     entries before applying LIMIT. Deep offset pages and growing history need
     measured optimization, potentially checked checkpoints and cursor pagination.
 
-44. **What remains before a production deployment?** Runtime least privilege,
-    TLS and ingress policy, secret/key rotation, tested backup/restore and failover,
-    bounded reconciliation/retention, poison-event operations and independent
-    security review. Local Compose success establishes none of those by itself.
+44. **What remains before a production deployment?** TLS and ingress policy,
+    managed secret/key rotation, encrypted off-host/PITR backups and multi-node
+    failover, bounded reconciliation/archival and independent security review.
+    Restricted runtime credentials, logical restore drills, abrupt JVM recovery
+    and poison-event operations are implemented; they do not prove those wider
+    deployment properties.
+
+45. **What additional guarantees does V2 add?** Every completed or failed transfer
+    references its immutable replay record and must have the matching financial
+    audit and outbox evidence at commit. Contradictory or orphan financial
+    evidence is rejected rather than merely found by a later check.
+
+46. **What did populated-upgrade testing catch?** The legacy immutable transfer
+    trigger rejected a privileged migration's new-column backfill. V2 now disables
+    only that trigger around the backfill inside Flyway's transaction, then
+    re-enables it. LegacyMigrationIT seeds real V1 history and verifies the upgrade.
+
+47. **Why was catching only a Spring lock exception insufficient?** A real
+    PostgreSQL55P03 timeout was not always translated to that subtype. The engine
+    examines the SQL cause chain for55P03,40P01 and40001 and retries the entire
+    transaction; unrelated database errors still propagate and roll back.
+
+48. **How is abrupt process death different from a thrown exception?** Runtime.halt
+    bypasses normal application cleanup. A fresh JVM must rely on PostgreSQL's
+    committed facts. ProcessRecoveryIT tests both sides of commit and repeats
+    replay from independent processes against the same database.
+
+49. **Why isolate Flyway in a separate process?** Restricted datasource privileges
+    provide little protection if the API process also retains the migration
+    password. Compose's migrate job owns the schema; the backend receives no such
+    credential, has Flyway disabled and cannot perform DDL or truncate history.
+
+50. **Why does SELECT FOR UPDATE need a narrowly granted update privilege?**
+    PostgreSQL requires UPDATE permission on at least one column. The runtime has
+    UPDATE(id) for transfer locking, while the immutable trigger rejects actual
+    edits, including no-op updates. The capability is tested under the runtime role.
+
+51. **What happens to a poison Kafka record?** After bounded retries it is durably
+    quarantined. If storing that evidence fails, recovery propagates the failure
+    and Kafka cannot acknowledge it. Other records can progress after retention.
+
+52. **Can manual event replay move money again?** It invokes the deduplicating
+    audit consumer, not TransferEngine. Original evidence remains immutable;
+    corrected payload and operator reason are audited. A successful projection,
+    deduplication marker and quarantine resolution commit together.
+
+53. **Why alert separately on outbox backlog and quarantine?** An event can be
+    published successfully and then fail consumption, leaving zero outbox backlog
+    but an unresolved quarantined effect. Broker lag can also fall after quarantine.
+
+54. **What makes a trace verification meaningful?** The check supplies one sampled
+    W3C context and verifies actual span ancestry across HTTP, transfer, journal,
+    outbox, Kafka producer and consumer, plus durable delivery evidence. Unrelated
+    traces in Tempo would not establish propagation across the outbox boundary.
+
+55. **Does a passing dependency scan mean no known advisory exists?** No. The
+    recorded runtime scan distinguishes patched findings from two expiring
+    exceptions for unused Spring MVC features. Architecture rules prevent those
+    affected APIs being introduced silently, and unresolved findings fail CI.
+
+56. **How does the restore tool avoid overwriting live data?** It verifies the
+    dump checksum before creating a new restricted-name database, refuses live
+    or existing targets, restores in one transaction and checks ledger invariants.
+    The drill removes only its own randomly named disposable target.
+
+57. **How do generated properties differ from seeded integration sequences?**
+    jqwik generates and shrinks domain counterexamples. PostgreSQL generated
+    sequences exercise transaction boundaries and real invariants. Neither alone
+    establishes all distributed failure behavior, so both complement crash tests.
+
+58. **Why must statement sorting match its window ordering?** A running balance
+    calculated in one order and displayed in another is misleading when timestamps
+    tie. The same deterministic ordering is used for the window and visible rows.
+
+59. **What happens before a destination bigint balance would overflow?** The
+    engine records a durable BALANCE_LIMIT_EXCEEDED rejection with no financial
+    journal. A retry of that key preserves the result rather than depending on a
+    driver arithmetic error or silently wrapping a monetary amount.
+
+60. **What makes the load experiment reproducible?** It records hardware/Docker
+    allocation, duration, VUs, unique run IDs and raw percentile summaries. Normal
+    modes use separate source pairs; contention intentionally shares one. Before
+    and after reconciliation must be clean, and unexpected HTTP failures fail it.

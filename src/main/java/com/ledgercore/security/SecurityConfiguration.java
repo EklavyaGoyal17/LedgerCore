@@ -58,6 +58,8 @@ public class SecurityConfiguration {
     OAuth2TokenValidator<Jwt> claims =
         jwt -> {
           try {
+            if (jwt.getSubject() == null || jwt.getAudience() == null)
+              return OAuth2TokenValidatorResult.failure(new OAuth2Error("invalid_token"));
             User u = users.findById(UUID.fromString(jwt.getSubject())).orElse(null);
             if (jwt.getExpiresAt() != null
                 && jwt.getAudience().contains(audience)

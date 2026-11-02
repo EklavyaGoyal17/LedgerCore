@@ -49,7 +49,8 @@ public class AccountService {
     }
     UUID id = UUID.randomUUID(), ledger = UUID.randomUUID();
     db.update(
-        "INSERT INTO ledger_accounts(id,identifier,classification,currency,normal_direction) VALUES (?,?,'LIABILITY',?,'CREDIT')",
+        "INSERT INTO ledger_accounts(id,identifier,classification,currency,normal_direction) VALUES"
+            + " (?,?,'LIABILITY',?,'CREDIT')",
         ledger,
         "CUSTOMER-" + id,
         currency);
@@ -73,7 +74,8 @@ public class AccountService {
     return new Page<>(
         db
             .query(
-                "SELECT * FROM financial_accounts WHERE owner_id=? ORDER BY created_at,id LIMIT ? OFFSET ?",
+                "SELECT * FROM financial_accounts WHERE owner_id=? ORDER BY created_at,id LIMIT ?"
+                    + " OFFSET ?",
                 AccountStore.MAPPER,
                 actor.id(),
                 limit,
@@ -90,7 +92,8 @@ public class AccountService {
     var a = accounts.owned(actor, id);
     Long minor =
         db.queryForObject(
-            "SELECT coalesce(sum(credit_minor-debit_minor),0) FROM journal_entries WHERE ledger_account_id=?",
+            "SELECT coalesce(sum(credit_minor-debit_minor),0) FROM journal_entries WHERE"
+                + " ledger_account_id=?",
             Long.class,
             a.ledgerAccountId());
     return new Balance(id, a.currency(), Money.format(minor), "POSTED_JOURNAL");
@@ -101,12 +104,12 @@ public class AccountService {
     var a = accounts.owned(actor, id);
     String sql =
         """
-      SELECT * FROM (
-        SELECT e.id,e.journal_id,j.reference,j.kind,e.debit_minor,e.credit_minor,j.posted_at,
-          sum(e.credit_minor-e.debit_minor) OVER (ORDER BY e.created_at,e.id ROWS UNBOUNDED PRECEDING) AS running
-        FROM journal_entries e JOIN journal_transactions j ON j.id=e.journal_id WHERE e.ledger_account_id=?
-      ) s ORDER BY posted_at,id LIMIT ? OFFSET ?
-      """;
+SELECT * FROM (
+  SELECT e.id,e.journal_id,j.reference,j.kind,e.debit_minor,e.credit_minor,j.posted_at,
+    sum(e.credit_minor-e.debit_minor) OVER (ORDER BY j.posted_at,e.id ROWS UNBOUNDED PRECEDING) AS running
+  FROM journal_entries e JOIN journal_transactions j ON j.id=e.journal_id WHERE e.ledger_account_id=?
+) s ORDER BY posted_at,id LIMIT ? OFFSET ?
+""";
     return new Page<>(
         db.query(
             sql,

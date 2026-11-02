@@ -1,37 +1,72 @@
-# API security
+# API security and object authorization
 
-## Concept in plain English
+## Concept and purpose
 
-Authentication establishes identity; authorization decides whether that identity can perform this action on this object.
+Authentication establishes identity. Authorization decides whether that identity
+may act on a particular object. A signed token does not grant every account UUID
+or permission to issue simulated money. Both route policy and object checks matter.
 
-## Why backend engineers need it
+## Trace a login and request
 
-A valid JWT must not allow a user to read another customer statement by guessing a UUID.
+`security/AuthenticationController` accepts validated credentials and delegates to
+`identity/IdentityService`. Email is normalized and registration creates USER
+identities. BCrypt uses cost 12. Credentials require 12–72 printable ASCII
+characters, making its byte limit explicit. This is the project's educational
+policy, not a general claim that every product should forbid Unicode. An absent
+user still incurs a dummy-hash check to avoid an obvious no-hash timing difference.
 
-## LedgerCore implementation
+`Tokens.issue` creates HS256 tokens with issuer, audience, UUID subject, issue
+time, expiry, and role. `SecurityConfiguration` requires a signing secret of at
+least 32 bytes, verifies signature/issuer/time, requires expiry/intended audience,
+and checks the current database user's active status and role. This permits
+subsequent-request rejection after disablement or role changes at the cost of a
+database lookup per authenticated request.
 
-BCrypt hashes passwords; signed short-lived JWTs validate issuer/audience/expiry and current DB role/status. AccountStore and TransferStore enforce object-level visibility; administrative funding/reversal is restricted.
+| Attack | Current defense | Remaining boundary |
+|---|---|---|
+| Tampered or wrong-audience token | decoder validation | key distribution and rotation |
+| USER calls simulated deposit | ADMIN route plus service checks | compromised admin credentials |
+| Alice requests Bob's statement | `AccountStore.owned`, 404 | consistent checks on future endpoints |
+| Stranger knows transfer ID | `TransferStore.owned` checks actor/participants/admin | appropriate participant DTO fields |
+| Duplicate payment | durable key and fingerprint | retaining original key after unknown outcome |
+| Brute-force login | BCrypt plus Redis admission | trusted ingress/IP handling and monitoring |
 
-## Relevant files and classes
+`TransferEngine` checks source ownership after locking. V2 adds database checks
+for financial actors, currencies, account status, and administrative operations.
+These defend ordinary SQL writes without replacing authentication.
 
-`security/SecurityConfiguration.java`, `Tokens.java`, `identity/IdentityService.java`, `AccountStore.owned`, `TransferStore.owned`.
+## Credentials and database privileges
 
-## Concrete example
+The migrator owns schema evolution; the runtime role has only required table
+operations. Runtime cannot create/truncate tables, read Flyway history, or disable
+immutable triggers. `ProcessRecoveryIT` executes real denied statements using
+runtime credentials. Environment variables supply secrets. Simulation defaults
+in `.env.example` are not suitable credentials for external deployment. TLS,
+ingress policy, private metrics exposure, and key rotation remain deployment work.
 
-Alice requests Bob's statement and gets 404 without private data. A USER token calling reconciliation receives 403. A modified token signature receives 401.
+## Dependency findings require scoped reasoning
 
-## Common mistakes
+`scan-dependencies.py` scans the resolved runtime CycloneDX SBOM against OSV.
+`security/advisory-exceptions.json` records package/advisory, specific evidence,
+and expiry. Current Spring MVC exceptions cover unused SSE-fragment and XSLT-view
+features; `ArchitectureTest` rejects dependencies on their relevant classes.
+This is an expiring applicability decision, not a claim that the framework has no
+vulnerabilities. Reassess when configuration, dependency versions, feature use,
+or advisory information changes.
 
-Route-only authorization, accepting an unsigned role, exposing password hashes as entities, logging tokens, or using multibyte passwords beyond BCrypt limits can introduce security defects.
+## Questions, mistakes, and experiments
 
-## Failure scenario
+- **Why 404 for another owner's private account?** Avoid exposing its existence
+  through the normal object lookup response.
+- **Does stateless JWT eliminate DB work?** It eliminates server sessions; current
+  identity validation still queries PostgreSQL.
+- **Why disable CSRF here?** Explicit bearer headers authorize requests rather
+  than an automatically attached session cookie. Reassess if that changes.
+- **Does disabling an identity help with stolen tokens?** Subsequent requests are
+  rejected by the current-state validator; expiration also bounds token use.
 
-A stolen token remains useful until expiration unless its identity is disabled or role changes. Missing Redis blocks authentication traffic according to the chosen policy.
-
-## Interview question and answer
-
-Why validate audience as well as signature? A trusted issuer can issue tokens for multiple services; a correctly signed token for another audience should not authorize this API.
-
-## Further learning exercise
-
-Run realBcryptLoginAndJwtValidation, invalidJwtClaimsAreRejected and httpOwnershipRolesValidationAndProblemDetails. Add a missing-expiration case and evaluate asymmetric key rotation.
+Run real login/JWT, invalid-claim, ownership, malformed-request, method/media-type,
+and runtime-role denial tests. Avoid unsigned roles, route-only authorization,
+entity serialization, missing-expiry acceptance, raw bearer logging, and treating
+a scanner's empty result as a security certification. Propose asymmetric key
+rotation with overlapping verification keys, then specify its migration tests.

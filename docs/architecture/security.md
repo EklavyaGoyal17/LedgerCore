@@ -37,9 +37,25 @@ PostgreSQL. Network TLS and authenticated Kafka/Redis are outside this local
 Compose design. All host service bindings are loopback; container network access
 and a compromised local machine remain relevant threats.
 
-Flyway and the runtime currently use the same schema-owner credentials for easy
-local startup. A production deployment must run migrations separately, revoke
-runtime DDL/TRUNCATE privileges, protect function definitions and immutable tables,
-rotate keys and database credentials, configure TLS/ingress protection, test
-backups and enforce retention/privacy requirements. No public endpoint changes or
-corrupts journal rows. The corruption fixture exists only in integration tests.
+Compose isolates schema ownership in a one-shot migration process. The backend
+receives only restricted runtime credentials, cannot create tables, truncate,
+disable triggers, edit/delete immutable history or access Flyway history, and has
+no migration credential in its environment. Actual process-level tests verify
+these restrictions. The upgrade bootstrap supports existing volumes without
+discarding their financial history. See [deployment controls](../operations/deployment.md).
+
+The backend container runs without root, with a read-only filesystem, bounded
+temporary storage, dropped capabilities and no privilege escalation. Host Docker
+administrators can still inspect bootstrap/migration credentials and must be
+trusted. A shared deployment needs TLS/ingress protection, managed secret/key
+rotation and encrypted off-host backup/PITR retention. Logical backup, isolated
+restore and abrupt JVM recovery are implemented and exercised; they do not prove
+multi-node failover or recovery from destruction of the entire workstation.
+
+Runtime dependency scanning generates a CycloneDX SBOM and queries OSV. Compatible
+security patch overrides are pinned. Two expiring, feature-specific Spring MVC
+exceptions cover unused SSE-fragment/XSLT view features; architecture rules forbid
+introducing those affected APIs silently. See [security policy](../../security/README.md).
+No public endpoint changes or corrupts journal rows. The corruption fixture exists
+only in integration tests; administrative event replay changes a projection and
+retains its original evidence without reposting financial journals.

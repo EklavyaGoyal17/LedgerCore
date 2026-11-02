@@ -61,6 +61,23 @@ public class ProblemAdvice {
     return problem(404, "NOT_FOUND", "Resource does not exist");
   }
 
+  @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+  ResponseEntity<ProblemDetail> method(
+      org.springframework.web.HttpRequestMethodNotSupportedException ex) {
+    ResponseEntity<ProblemDetail> result =
+        problem(
+            405, "METHOD_NOT_ALLOWED", "This resource does not support the requested HTTP method");
+    org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+    if (ex.getSupportedHttpMethods() != null) headers.setAllow(ex.getSupportedHttpMethods());
+    return new ResponseEntity<>(result.getBody(), headers, result.getStatusCode());
+  }
+
+  @ExceptionHandler(org.springframework.web.HttpMediaTypeNotSupportedException.class)
+  ResponseEntity<ProblemDetail> media(
+      org.springframework.web.HttpMediaTypeNotSupportedException ex) {
+    return problem(415, "UNSUPPORTED_MEDIA_TYPE", "Use application/json for request bodies");
+  }
+
   @ExceptionHandler(DataAccessException.class)
   ResponseEntity<ProblemDetail> database(DataAccessException ex) {
     log.error("Database operation failed; errorCategory={}", ex.getClass().getSimpleName());

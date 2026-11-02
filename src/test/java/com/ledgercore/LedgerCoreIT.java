@@ -106,7 +106,8 @@ class LedgerCoreIT {
 
   long journals(UUID source) {
     return db.queryForObject(
-        "SELECT count(*) FROM transfers WHERE source_id=? AND kind='TRANSFER' AND status='COMPLETED'",
+        "SELECT count(*) FROM transfers WHERE source_id=? AND kind='TRANSFER' AND"
+            + " status='COMPLETED'",
         Long.class,
         source);
   }
@@ -237,7 +238,8 @@ class LedgerCoreIT {
     fund(a, "1000");
     var first = send("retained", a, b, "100", alice);
     db.update(
-        "UPDATE idempotency_records SET expires_at=clock_timestamp()-interval '1 day' WHERE principal_id=? AND key='retained'",
+        "UPDATE idempotency_records SET expires_at=clock_timestamp()-interval '1 day' WHERE"
+            + " principal_id=? AND key='retained'",
         alice.id());
     assertThat(
             json.read(send("retained", a, b, "100", alice).body(), TransferStore.Transfer.class)
@@ -296,7 +298,8 @@ class LedgerCoreIT {
     assertThatThrownBy(
             () ->
                 db.update(
-                    "INSERT INTO journal_entries(id,journal_id,ledger_account_id,debit_minor) VALUES (?,?,?,1)",
+                    "INSERT INTO journal_entries(id,journal_id,ledger_account_id,debit_minor)"
+                        + " VALUES (?,?,?,1)",
                     UUID.randomUUID(),
                     journal,
                     ledger))
@@ -318,12 +321,16 @@ class LedgerCoreIT {
                     status -> {
                       UUID key = UUID.randomUUID(), journal = UUID.randomUUID();
                       db.update(
-                          "INSERT INTO idempotency_records(id,principal_id,operation,key,fingerprint,state,response_status,response_body) VALUES (?,?,'test',?,'test','FINISHED',201,'{}')",
+                          "INSERT INTO"
+                              + " idempotency_records(id,principal_id,operation,key,fingerprint,state,response_status,response_body)"
+                              + " VALUES (?,?,'test',?,'test','FINISHED',201,'{}')",
                           key,
                           alice.id(),
                           UUID.randomUUID().toString());
                       db.update(
-                          "INSERT INTO journal_transactions(id,reference,kind,currency,idempotency_reference) VALUES (?,?,'TRANSFER','INR',?)",
+                          "INSERT INTO"
+                              + " journal_transactions(id,reference,kind,currency,idempotency_reference)"
+                              + " VALUES (?,?,'TRANSFER','INR',?)",
                           journal,
                           "INVALID-" + journal,
                           key);
@@ -333,7 +340,8 @@ class LedgerCoreIT {
                               UUID.class,
                               a);
                       db.update(
-                          "INSERT INTO journal_entries(id,journal_id,ledger_account_id,debit_minor) VALUES (?,?,?,1)",
+                          "INSERT INTO journal_entries(id,journal_id,ledger_account_id,debit_minor)"
+                              + " VALUES (?,?,?,1)",
                           UUID.randomUUID(),
                           journal,
                           ledger);
@@ -465,7 +473,19 @@ class LedgerCoreIT {
 
   @ParameterizedTest
   @org.junit.jupiter.params.provider.ValueSource(
-      strings = {"expired", "issuer", "audience", "subject", "disabled", "role"})
+      strings = {
+        "expired",
+        "issuer",
+        "audience",
+        "subject",
+        "disabled",
+        "role",
+        "missingexp",
+        "missingaudience",
+        "missingsubject",
+        "missingrole",
+        "notyetvalid"
+      })
   void invalidJwtClaimsAreRejected(String invalid) throws Exception {
     java.time.Instant now = java.time.Instant.now();
     var claims =
@@ -476,6 +496,14 @@ class LedgerCoreIT {
             .issuedAt(now.minusSeconds(600))
             .expiresAt(invalid.equals("expired") ? now.minusSeconds(300) : now.plusSeconds(300))
             .claim("role", invalid.equals("role") ? "ADMIN" : "USER")
+            .claims(
+                values -> {
+                  if (invalid.equals("missingexp")) values.remove("exp");
+                  if (invalid.equals("missingaudience")) values.remove("aud");
+                  if (invalid.equals("missingsubject")) values.remove("sub");
+                  if (invalid.equals("missingrole")) values.remove("role");
+                  if (invalid.equals("notyetvalid")) values.put("nbf", now.plusSeconds(300));
+                })
             .build();
     if (invalid.equals("disabled"))
       db.update("UPDATE app_users SET status='DISABLED' WHERE id=?", alice.id());
@@ -544,6 +572,39 @@ class LedgerCoreIT {
                 .value("#/components/schemas/Transfer"))
         .andExpect(
             jsonPath("$.components.schemas.Transfer.properties.amount.type").value("string"));
+  }
+
+  @Test
+  void journalEvidenceIsBalancedAndParticipantAuthorized() throws Exception {
+    fund(a, "1000");
+    UUID journal =
+        json.read(send("journal-evidence", a, b, "100", alice).body(), TransferStore.Transfer.class)
+            .journalId();
+    var owner = jwt().jwt(j -> j.subject(alice.id().toString()).claim("role", "USER"));
+    var recipient = jwt().jwt(j -> j.subject(bob.id().toString()).claim("role", "USER"));
+    Actor outsider = user(false);
+    mvc.perform(get("/api/v1/journals/{id}", journal).with(owner))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("entries.length()").value(2))
+        .andExpect(jsonPath("currency").value("INR"));
+    mvc.perform(get("/api/v1/journals/{id}", journal).with(recipient)).andExpect(status().isOk());
+    mvc.perform(
+            get("/api/v1/journals/{id}", journal)
+                .with(jwt().jwt(j -> j.subject(outsider.id().toString()).claim("role", "USER"))))
+        .andExpect(status().isNotFound());
+    mvc.perform(get("/api/v1/journals/{id}", journal)).andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void unsupportedMethodsAndMediaRemainClientErrors() throws Exception {
+    var owner = jwt().jwt(j -> j.subject(alice.id().toString()).claim("role", "USER"));
+    mvc.perform(delete("/api/v1/accounts/{id}", a).with(owner))
+        .andExpect(status().isMethodNotAllowed())
+        .andExpect(header().exists("Allow"))
+        .andExpect(jsonPath("status").value(405));
+    mvc.perform(post("/api/v1/accounts").with(owner).contentType("text/plain").content("INR"))
+        .andExpect(status().isUnsupportedMediaType())
+        .andExpect(jsonPath("status").value(415));
   }
 
   private static <T> List<T> race(List<Supplier<T>> tasks) throws Exception {

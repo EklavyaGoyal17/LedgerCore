@@ -1,0 +1,16 @@
+[
+  {
+    "package": "org.springframework:spring-webmvc",
+    "advisoryId": "GHSA-j9f9-w8pj-32f8",
+    "expires": "2027-01-22",
+    "rationale": "The affected server-sent-event fragment rendering feature is absent: every LedgerCore controller returns JSON records, Problem Details or a stored JSON result. No SseEmitter, ResponseBodyEmitter, FragmentsRendering or fragment-view configuration is used.",
+    "evidence": "ArchitectureTest.unusedVulnerableViewFeaturesCannotBeIntroduced and generated OpenAPI media types; https://osv.dev/vulnerability/GHSA-j9f9-w8pj-32f8"
+  },
+  {
+    "package": "org.springframework:spring-webmvc",
+    "advisoryId": "GHSA-pc63-qcmh-9cmg",
+    "expires": "2027-01-22",
+    "rationale": "The affected XsltView is neither configured nor referenced. LedgerCore is a REST JSON backend with Swagger static resources; untrusted clients cannot choose or construct an XSLT view. A framework major migration is not used as a substitute for assessing applicability.",
+    "evidence": "ArchitectureTest.unusedVulnerableViewFeaturesCannotBeIntroduced and absence of XSLT configuration in application resources; https://osv.dev/vulnerability/GHSA-pc63-qcmh-9cmg"
+  }
+]

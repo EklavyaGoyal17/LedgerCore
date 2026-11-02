@@ -7,3 +7,5 @@ target/
 __pycache__/
 .tools/
 load-tests/results/
+.jqwik-database
+backups/

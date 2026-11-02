@@ -1,37 +1,98 @@
-# PostgreSQL locking
+# PostgreSQL locking, retries, and deadlocks
 
-## Concept in plain English
+## Concept and purpose
 
-A row lock forces competing writers to wait. Isolation controls which committed versions a query may see; READ COMMITTED alone does not serialize a read-check-write sequence.
+A row lock makes conflicting operations wait for an existing transaction to
+finish. It turns a funds decision into one serialized decision per participating
+account. A process-local `synchronized` block would protect only one JVM, and
+ordinary read committed queries alone would not protect the read/check/write gap.
 
-## Why backend engineers need it
+## The exact LedgerCore protocol
 
-Two individually valid withdrawals can jointly violate an available-funds rule.
+`AccountStore.lock` removes duplicate IDs, sorts UUIDs using Java's consistent
+comparison, and issues one `SELECT ... FOR UPDATE` per row. Every writer uses that
+protocol for both participants. The returned projection is validated only after
+its row has been locked. Java UUID order differs from PostgreSQL UUID order for
+some values; that is harmless because separate statements explicitly determine
+acquisition order and every application writer uses the same Java comparison.
 
-## LedgerCore implementation
+| Step | Request X: send 800 to B | Request Y: send 800 to C |
+|---|---|---|
+| 1 | reserves key X | reserves different key Y |
+| 2 | locks shared source containing 1000 | waits on that source |
+| 3 | checks funds, posts journal, projection becomes 200 | cannot make its funds decision yet |
+| 4 | COMMIT releases row lock | acquires row and reads 200 |
+| 5 | returns completed outcome | commits insufficient-funds outcome without a journal |
 
-AccountStore.lock sorts UUIDs and locks each row in a separate query. TransferEngine validates the freshly locked projection. Lock timeouts have bounded whole-transaction retries.
+`LedgerCoreIT.repeatedConcurrentWithdrawalsCannotOverspend` repeats this race ten
+times with distinct recipients. The opposite-direction test ensures A-to-B and
+B-to-A use the same acquisition order. Customer balance checks and journal
+projection constraints are additional defenses, not substitutes for the protocol.
 
-## Relevant files and classes
+## A real deadlock rather than a mocked exception
 
-`accounts/AccountStore.java`, `transfers/application/TransferEngine.java`, `LedgerCoreIT.repeatedConcurrentWithdrawalsCannotOverspend`, `oppositeDirectionTransfersDoNotDeadlock`.
+`FinancialIntegrityIT.realPostgresDeadlockVictimRetriesWithoutDuplicatePosting`
+uses an external connection that deliberately violates the application order:
 
-## Concrete example
+| Step | Transfer engine | External fixture |
+|---|---|---|
+| 1 | not started | locks second account |
+| 2 | locks first account, waits for second | holds second account |
+| 3 | waiting | requests first account and waits |
+| 4 | detects cycle; PostgreSQL aborts engine attempt | can now acquire first account |
+| 5 | starts new transaction | commits and releases both locks |
+| 6 | locks both, posts once, commits | finished |
 
-Timeline: T1 locks source=1000; T2 waits; T1 posts 800 and commits balance=200; T2 acquires the row, sees 200 and records FAILED without a journal.
+The fixture gives its external transaction a longer deadlock detection interval
+and observes `pg_stat_activity` before forming the cycle. It checks a real retry
+metric and final accounting state. This demonstrates recovery from another SQL
+path violating the order; it does not imply that the application intentionally
+creates deadlocks. PostgreSQL may choose a victim; production code cannot assume
+which business operation it will be. See [PostgreSQL explicit locking](https://www.postgresql.org/docs/17/explicit-locking.html).
 
-## Common mistakes
+## The timeout bug the experiment found
 
-Locking only a destination, checking funds before the lock, inconsistent A→B/B→A lock order, or using Thread.sleep as coordination can hide races.
+The separate timeout test holds a row beyond `SET LOCAL lock_timeout='5s'`.
+Spring's default exception translation did not reliably classify PostgreSQL
+`55P03` as `PessimisticLockingFailureException`. Catching only that Java subtype
+therefore missed a real contention failure. `TransferEngine` now examines the
+cause chain for the narrow SQL states below, as well as the Spring locking type.
 
-## Failure scenario
+| SQL state | Meaning | Engine response |
+|---|---|---|
+| `55P03` | lock unavailable/lock timeout | retry whole transaction |
+| `40P01` | detected deadlock | retry whole transaction |
+| `40001` | serialization failure | retry whole transaction |
+| `23514` and other integrity errors | invalid committed state | roll back; do not hide with concurrency retry |
 
-A lock timeout aborts that attempt. A fresh transaction re-reserves the key. Sorted acquisition prevents the classic two-account cycle, but future SQL paths can still introduce deadlocks.
+There are at most three attempts: the initial attempt and two retries. Exhaustion
+returns `503 CONCURRENCY_RETRY`, instructing the client to keep the original key.
+Connection-pool acquisition timeout and SQL lock timeout are different symptoms;
+this narrow retry policy does not silently treat every database outage as a
+transient account lock.
 
-## Interview question and answer
+## Optimistic alternative and mistakes
 
-Why not optimistic locking? It is valid but creates retries on hot accounts. Pessimistic locking matches the short serialized funds decision; neither strategy fixes a missing invariant.
+An optimistic version check would update only if `version=expectedVersion`, then
+retry when no row matched. It must re-read funds, recreate the journal/outcome,
+and commit the entire operation. At high contention, optimistic losers can spend
+work constructing transactions that later abort. Pessimistic locking makes the
+short critical section explicit. Neither approach automatically handles a future
+multi-account aggregate limit: define and protect the whole invariant.
 
-## Further learning exercise
+Avoid checking funds before acquiring the lock, inconsistent writer order,
+network calls while holding customer locks, and arbitrary sleeps as a race-test
+strategy. A lock can wait without forming a deadlock; only a cycle is a deadlock.
 
-Use two psql sessions to hold FOR UPDATE and inspect pg_blocking_pids. Draw lost update, phantom and write-skew examples; explain which rows their solution must lock.
+## Questions and practical exercise
+
+- **Why lock the recipient?** Its projection can concurrently receive, spend, or
+  reverse money; all writers need one shared protocol.
+- **Does a normal statement query wait for `FOR UPDATE`?** Ordinary MVCC readers
+  generally read committed versions; conflicting lockers/writers wait.
+- **Why retry outside `TransactionTemplate`?** The victim transaction is aborted;
+  its reservation and partial financial writes must be recreated together.
+
+Run the two real contention tests with `mvn '-Dit.test=FinancialIntegrityIT' verify`.
+Inspect `pg_stat_activity` and `pg_blocking_pids(pid)` while a disposable learning
+transaction holds a row. Draw the wait-for graph before terminating anything.

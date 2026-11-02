@@ -1,0 +1,42 @@
+{
+  "traceId": "aedf1e802d6341cba45b8f63b0cd4298",
+  "spanNames": [
+    "authenticate bearertoken",
+    "authorize request",
+    "http post /api/v1/transfers",
+    "ledgercore.events.v1 receive",
+    "ledgercore.events.v1 send",
+    "ledgercore.journal.post",
+    "ledgercore.outbox.publish",
+    "ledgercore.transfer",
+    "secured request",
+    "security filterchain after",
+    "security filterchain before"
+  ],
+  "spanCount": 11,
+  "connectedHttpTransferJournalOutboxKafka": true,
+  "simulation": true,
+  "transferId": "093324c9-efb7-49da-87cb-462a3e6444f7",
+  "journalId": "5af66b2a-c0dc-41ab-8b29-62dc5e45a3d8",
+  "durablePublishedAndConsumed": true,
+  "dashboardPanels": 14,
+  "alertRules": [
+    "LedgerCoreBackendUnavailable",
+    "LedgerCoreConsumerLag",
+    "LedgerCoreConsumerQuarantine",
+    "LedgerCoreDatabasePoolContention",
+    "LedgerCoreHttpServerErrors",
+    "LedgerCoreOutboxBacklog",
+    "LedgerCoreReconciliationDiscrepancy"
+  ],
+  "liveMetricSeries": {
+    "http_server_requests_seconds_bucket": 552,
+    "ledgercore_transfer_duration_seconds_bucket": 69,
+    "ledgercore_transfer_committed_total": 1,
+    "ledgercore_outbox_pending": 1,
+    "ledgercore_events_quarantined": 1,
+    "hikaricp_connections_active": 1,
+    "hikaricp_connections_pending": 1,
+    "kafka_consumer_fetch_manager_records_lag_max": 3
+  }
+}

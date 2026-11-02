@@ -1,0 +1,44 @@
+rule_files:
+  - /etc/prometheus/rules/ledgercore.yml
+evaluation_interval: 1m
+tests:
+  - name: A publication backlog is distinct from a failed consumer effect
+    interval: 1m
+    input_series:
+      - series: 'up{job="ledgercore"}'
+        values: '1x10'
+      - series: 'ledgercore_outbox_pending{job="ledgercore"}'
+        values: '5x10'
+      - series: 'ledgercore_events_quarantined{job="ledgercore"}'
+        values: '0x10'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: LedgerCoreOutboxBacklog
+        exp_alerts:
+          - exp_labels: {job: ledgercore, severity: warning}
+            exp_annotations:
+              summary: Durable events have remained unpublished for five minutes
+              description: Financial posting may remain healthy. Inspect Kafka availability, publication failures and due retry times; never delete outbox evidence to clear this alert.
+      - eval_time: 6m
+        alertname: LedgerCoreConsumerQuarantine
+        exp_alerts: []
+  - name: An empty outbox does not resolve consumer quarantine
+    interval: 1m
+    input_series:
+      - series: 'up{job="ledgercore"}'
+        values: '1x10'
+      - series: 'ledgercore_outbox_pending{job="ledgercore"}'
+        values: '0x10'
+      - series: 'ledgercore_events_quarantined{job="ledgercore"}'
+        values: '1x10'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: LedgerCoreConsumerQuarantine
+        exp_alerts:
+          - exp_labels: {job: ledgercore, severity: warning}
+            exp_annotations:
+              summary: Failed consumer effects require administrator investigation
+              description: Original events are durably quarantined and partition progress can continue. An empty outbox or zero Kafka lag does not resolve this alert; use the audited replay workflow.
+      - eval_time: 6m
+        alertname: LedgerCoreOutboxBacklog
+        exp_alerts: []

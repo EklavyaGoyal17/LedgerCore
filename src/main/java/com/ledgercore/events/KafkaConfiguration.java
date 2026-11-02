@@ -21,10 +21,16 @@ public class KafkaConfiguration {
   }
 
   @Bean
-  DefaultErrorHandler eventErrors() {
-    // Never silently skip a failed event. A poison event needs an operator repair/replay.
+  DefaultErrorHandler eventErrors(
+      EventOperations operations,
+      @Value("${ledgercore.events.consumer-retry-ms:1000}") long retryMs,
+      @Value("${ledgercore.events.consumer-retries:3}") long retries) {
+    if (retryMs < 0 || retries < 0)
+      throw new IllegalArgumentException("Invalid Kafka retry limits");
+    // Advancing past a poison record is safe only when quarantine has durably committed.
+    // If PostgreSQL is unavailable, recovery itself throws and the record is retried.
     DefaultErrorHandler handler =
-        new DefaultErrorHandler(new FixedBackOff(1000, FixedBackOff.UNLIMITED_ATTEMPTS));
+        new DefaultErrorHandler(operations::quarantine, new FixedBackOff(retryMs, retries));
     handler.setClassifications(java.util.Map.of(Exception.class, true), true);
     return handler;
   }

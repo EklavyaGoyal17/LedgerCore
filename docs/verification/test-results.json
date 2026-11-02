@@ -1,19 +1,48 @@
 {
-  "verificationDate": "2026-10-24",
-  "command": "mvn -q spotless:apply clean verify",
+  "verificationDate": "2026-11-02",
+  "command": "mvn -B -ntp clean verify",
   "java": "Temurin 21.0.12.1",
   "totals": {
-    "tests": 44,
+    "tests": 85,
     "failures": 0,
     "errors": 0,
     "skipped": 0
   },
   "instructionCoverage": {
-    "covered": 3560,
-    "missed": 467,
-    "percent": 88.4
+    "covered": 4695,
+    "missed": 543,
+    "percent": 89.6334
+  },
+  "spotBugs": {
+    "effort": "Max",
+    "threshold": "High",
+    "findings": 0
+  },
+  "propertyTesting": {
+    "engine": "jqwik",
+    "properties": 3,
+    "attemptsPerProperty": 1000,
+    "seeds": [
+      "1992421039083963114",
+      "8843556889392209449",
+      "5953272485136467433"
+    ]
   },
   "suites": [
+    {
+      "suite": "com.ledgercore.ArchitectureTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "testCases": [
+        "businessModulesHaveNoCircularDependencies",
+        "financialPostingDoesNotDependOnRedisOrKafkaAvailability",
+        "unusedVulnerableViewFeaturesCannotBeIntroduced",
+        "accountingDomainDoesNotDependOnFrameworks",
+        "controllersNeverReturnIdentityEntities"
+      ]
+    },
     {
       "suite": "com.ledgercore.FinancialDomainTest",
       "tests": 12,
@@ -36,24 +65,77 @@
       ]
     },
     {
+      "suite": "com.ledgercore.FinancialPropertiesTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "testCases": [
+        "fractionalMinorUnitsAreAlwaysRejected",
+        "splitCounterpartsBalanceExactlyAndRejectOneMinorUnitMissing",
+        "formattingAndParsingNeverLoseMinorUnits"
+      ]
+    },
+    {
+      "suite": "com.ledgercore.MigrationRunnerTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "testCases": [
+        "missingMigrationConfigurationFailsBeforeConnecting(String)[1]",
+        "missingMigrationConfigurationFailsBeforeConnecting(String)[2]",
+        "missingMigrationConfigurationFailsBeforeConnecting(String)[3]"
+      ]
+    },
+    {
       "suite": "com.ledgercore.EventInfrastructureIT",
-      "tests": 2,
+      "tests": 3,
       "failures": 0,
       "errors": 0,
       "skipped": 0,
       "testCases": [
         "kafkaOutageAcknowledgmentLossRedeliveryAndConsumerRecovery",
+        "poisonEventIsDurablyQuarantinedPartitionContinuesAndAdminReplayIsAudited",
         "redisUsesAtomicExpiryAndDocumentedOutagePolicies"
       ]
     },
     {
+      "suite": "com.ledgercore.FinancialIntegrityIT",
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "testCases": [
+        "concurrentIdenticalReversalsReplayTheSingleCompensation",
+        "eventEnvelopeCannotMisrepresentItsDurableIdentity",
+        "directSqlCannotBypassCurrencyStatusOrSourceOwnershipEvenForRejectedOutcomes",
+        "statementsUseTheSameTotalOrderForPaginationAndRunningBalances",
+        "directJournalEntryCannotMixInrAndUsd",
+        "failedOutcomeCannotCommitWithoutMatchingAuditAndOutbox",
+        "destinationOverflowIsADurableBusinessRejectionWithoutAnyPosting",
+        "generatedDatabaseSequencesPreserveBothCurrenciesReplaysAndCompensations(long)[1]",
+        "generatedDatabaseSequencesPreserveBothCurrenciesReplaysAndCompensations(long)[2]",
+        "generatedDatabaseSequencesPreserveBothCurrenciesReplaysAndCompensations(long)[3]",
+        "generatedDatabaseSequencesPreserveBothCurrenciesReplaysAndCompensations(long)[4]",
+        "correctlyShapedFinancialEventsStillRequireARealBusinessOutcome",
+        "realPostgresDeadlockVictimRetriesWithoutDuplicatePosting",
+        "concurrentReversalKeysCannotCompensateTwice",
+        "postgresLockTimeoutRollsBackAndRetriesTheEntireIdempotentOperation",
+        "committedReplayIdentityOutcomeAndFinancialEventEvidenceAreImmutable",
+        "concurrentDifferentPayloadsShareOnlyOneDurableOutcome",
+        "reconciliationFlagsEventAuditReplayAndReversalCorruptionWithoutRepair"
+      ]
+    },
+    {
       "suite": "com.ledgercore.LedgerCoreIT",
-      "tests": 30,
+      "tests": 37,
       "failures": 0,
       "errors": 0,
       "skipped": 0,
       "testCases": [
         "failedOutcomeIsDurableEvenIfFundsArriveLater",
+        "journalEvidenceIsBalancedAndParticipantAuthorized",
         "generatedTransferSequencesPreserveLiabilitiesAndReconcile",
         "repeatedConcurrentWithdrawalsCannotOverspend",
         "invalidJwtClaimsAreRejected(String)[1]",
@@ -62,6 +144,11 @@
         "invalidJwtClaimsAreRejected(String)[4]",
         "invalidJwtClaimsAreRejected(String)[5]",
         "invalidJwtClaimsAreRejected(String)[6]",
+        "invalidJwtClaimsAreRejected(String)[7]",
+        "invalidJwtClaimsAreRejected(String)[8]",
+        "invalidJwtClaimsAreRejected(String)[9]",
+        "invalidJwtClaimsAreRejected(String)[10]",
+        "invalidJwtClaimsAreRejected(String)[11]",
         "generatedOpenApiDescribesTheReplayableTransferResponse",
         "consumerDeduplicationAndItsProjectionCommitTogether",
         "reversalCannotOverdrawRecipientAndCanBeRetriedWithANewKey",
@@ -70,6 +157,7 @@
         "httpOwnershipRolesValidationAndProblemDetails",
         "duplicateRequestsIncludingCanonicalAmountsPostOnlyOnce",
         "databaseRejectsUnbalancedJournalAtCommit",
+        "unsupportedMethodsAndMediaRemainClientErrors",
         "validationAndObjectAuthorizationDoNotConsumeAKey",
         "precommitFailuresRollbackEveryFinancialEffect(Point)[1]",
         "precommitFailuresRollbackEveryFinancialEffect(Point)[2]",
@@ -83,6 +171,28 @@
         "oppositeDirectionTransfersDoNotDeadlock",
         "reconciliationIndependentlyDetectsWrongTransferAmount",
         "realBcryptLoginAndJwtValidation"
+      ]
+    },
+    {
+      "suite": "com.ledgercore.LegacyMigrationIT",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "testCases": [
+        "populatedV1UpgradePreservesBothOutcomeKindsReplayAndImmutability"
+      ]
+    },
+    {
+      "suite": "com.ledgercore.ProcessRecoveryIT",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "testCases": [
+        "abruptJvmHaltAndNewProcessReplayPreserveExactlyOnePosting(String)[1]",
+        "abruptJvmHaltAndNewProcessReplayPreserveExactlyOnePosting(String)[2]",
+        "runtimeCannotOwnSchemaTruncateOrModifyImmutableHistory"
       ]
     }
   ]

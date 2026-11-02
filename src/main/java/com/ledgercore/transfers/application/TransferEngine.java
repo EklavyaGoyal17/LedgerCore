@@ -11,9 +11,11 @@ import com.ledgercore.transfers.domain.TransferLifecycle;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -130,7 +132,8 @@ public class TransferEngine {
                               faults.at(Faults.Point.BEFORE_COMMIT);
                               return response;
                             });
-                      } catch (PessimisticLockingFailureException ex) {
+                      } catch (DataAccessException ex) {
+                        if (!retryableConcurrencyFailure(ex)) throw ex;
                         if (attempt >= 2)
                           throw new DomainException(
                               503,
@@ -184,6 +187,9 @@ public class TransferEngine {
     UUID transferId = UUID.randomUUID(), journalId = null;
     String failure =
         source != null && source.balanceMinor() < c.money().minor() ? "INSUFFICIENT_FUNDS" : null;
+    if (failure == null && destination.balanceMinor() > Long.MAX_VALUE - c.money().minor())
+      failure = "BALANCE_LIMIT_EXCEEDED";
+    final String outcomeFailure = failure;
     if (failure == null) {
       UUID debitLedger =
           source == null
@@ -221,7 +227,9 @@ public class TransferEngine {
       lifecycle.transition(TransferLifecycle.State.FAILED);
     }
     db.update(
-        "INSERT INTO transfers(id,actor_id,source_id,destination_id,amount_minor,currency,kind,status,failure_code,journal_id,original_transfer_id) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO"
+            + " transfers(id,actor_id,source_id,destination_id,amount_minor,currency,kind,status,failure_code,journal_id,original_transfer_id,idempotency_reference)"
+            + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
         transferId,
         actor.id(),
         c.source(),
@@ -232,7 +240,8 @@ public class TransferEngine {
         lifecycle.state().name(),
         failure,
         journalId,
-        c.original());
+        c.original(),
+        idempotencyId);
     String event =
         failure != null
             ? "TransferFailed"
@@ -252,9 +261,9 @@ public class TransferEngine {
                     .counter(
                         "ledgercore.transfer.committed",
                         "outcome",
-                        failure == null ? "completed" : "failed",
+                        outcomeFailure == null ? "completed" : "failed",
                         "category",
-                        failure == null ? "none" : failure)
+                        outcomeFailure == null ? "none" : outcomeFailure)
                     .increment();
               }
             });
@@ -264,7 +273,7 @@ public class TransferEngine {
           json.write(
               Map.of(
                   "type",
-                  "urn:ledgercore:problem:insufficient_funds",
+                  "urn:ledgercore:problem:" + failure.toLowerCase(java.util.Locale.ROOT),
                   "title",
                   failure,
                   "status",
@@ -272,7 +281,9 @@ public class TransferEngine {
                   "code",
                   failure,
                   "detail",
-                  "Available funds are insufficient",
+                  "INSUFFICIENT_FUNDS".equals(failure)
+                      ? "Available funds are insufficient"
+                      : "Destination balance would exceed the supported minor-unit range",
                   "transferId",
                   transferId)));
     return new Idempotency.Result(201, json.write(transfers.get(transferId, false)));
@@ -280,5 +291,19 @@ public class TransferEngine {
 
   private static void requireAdmin(Actor actor) {
     if (!actor.admin()) throw new DomainException(403, "FORBIDDEN", "Administrative role required");
+  }
+
+  private static boolean retryableConcurrencyFailure(DataAccessException error) {
+    if (error instanceof PessimisticLockingFailureException) return true;
+    // Spring's default SQLExceptionSubclassTranslator does not necessarily classify PostgreSQL's
+    // lock_not_available (55P03). Restrict retries to the explicit transaction/lock SQL states;
+    // integrity violations and other technical errors must remain visible and roll back.
+    for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+      if (cause instanceof SQLException sql) {
+        String state = sql.getSQLState();
+        if ("55P03".equals(state) || "40P01".equals(state) || "40001".equals(state)) return true;
+      }
+    }
+    return false;
   }
 }

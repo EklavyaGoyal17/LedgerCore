@@ -13,6 +13,22 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+  db-bootstrap:
+    image: postgres:17.6-alpine
+    environment:
+      PGHOST: postgres
+      PGDATABASE: ledgercore
+      PGUSER: ledgercore
+      PGPASSWORD: ${DATABASE_PASSWORD:-local-ledgercore-db-change-me}
+      MIGRATION_PASSWORD: ${MIGRATION_PASSWORD:-local-migration-change-me}
+      RUNTIME_PASSWORD: ${RUNTIME_PASSWORD:-local-runtime-change-me}
+    volumes:
+      - ./infrastructure/postgres/bootstrap.sql:/bootstrap.sql:ro
+    entrypoint: [sh, -ec]
+    command:
+      - 'psql -v ON_ERROR_STOP=1 -v migration_password="$$MIGRATION_PASSWORD" -v runtime_password="$$RUNTIME_PASSWORD" -f /bootstrap.sql'
+    depends_on:
+      postgres: {condition: service_healthy}
   redis:
     image: redis:7.4.5-alpine
     command: [redis-server, --save, '', --appendonly, 'no']
@@ -43,12 +59,31 @@ services:
       interval: 10s
       timeout: 10s
       retries: 30
+  migrate:
+    image: ledgercore-backend:local
+    build: .
+    command: [--migrate-only]
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/ledgercore
+      FLYWAY_USER: ledgercore_migrator
+      FLYWAY_PASSWORD: ${MIGRATION_PASSWORD:-local-migration-change-me}
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck: {disable: true}
+    depends_on:
+      db-bootstrap: {condition: service_completed_successfully}
   backend:
+    image: ledgercore-backend:local
     build: .
     environment:
       DATABASE_URL: jdbc:postgresql://postgres:5432/ledgercore
-      DATABASE_USER: ledgercore
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-local-ledgercore-db-change-me}
+      DATABASE_USER: ledgercore_runtime
+      DATABASE_PASSWORD: ${RUNTIME_PASSWORD:-local-runtime-change-me}
+      SPRING_FLYWAY_ENABLED: 'false'
       JWT_SECRET: ${JWT_SECRET:-local-simulation-only-replace-with-at-least-32-random-bytes}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@ledgercore.local}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-local-admin-password-change-me}
@@ -59,14 +94,23 @@ services:
       TRACE_SAMPLE_PROBABILITY: ${TRACE_SAMPLE_PROBABILITY:-0.1}
     ports:
       - '127.0.0.1:${API_PORT:-8080}:8080'
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 30s
     depends_on:
       postgres: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
       redis: {condition: service_healthy}
       kafka: {condition: service_healthy}
   prometheus:
     image: prom/prometheus:v3.5.0
     volumes:
       - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infrastructure/prometheus/rules:/etc/prometheus/rules:ro
       - prometheus-data:/prometheus
     ports:
       - '127.0.0.1:${PROMETHEUS_PORT:-9090}:9090'

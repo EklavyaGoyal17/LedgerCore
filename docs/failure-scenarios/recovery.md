@@ -8,15 +8,18 @@
 | After outbox insertion | all writes roll back together | `AFTER_OUTBOX` |
 | Before commit | all writes roll back together | `BEFORE_COMMIT` |
 | After commit before response | complete transfer/result already durable | `AFTER_COMMIT`; replay key yields original result |
-| Before Kafka acknowledgment | transfer unaffected; outbox pending | broker pause in `EventInfrastructureIT` |
+| Before Kafka acknowledgment | transfer unaffected; outbox pending | real broker stop/start retaining storage in `EventInfrastructureIT` |
 | After Kafka ack before publication mark | duplicate may be sent | `AFTER_PUBLISH`; consumer deduplicates |
 | During consumer transaction | marker and projection both roll back | `DURING_CONSUMER`; Kafka redelivery recreates one effect |
 | After consumer DB commit before offset commit | duplicate delivery | unique processed ID makes redelivery a no-op |
+| Poison Kafka record after bounded retries | original payload and Kafka coordinates retained in quarantine | valid following record on same partition progresses; failed quarantine storage keeps delivery eligible for retry |
+| Manual replay fails during consumer processing | deduplication/projection roll back; failed operator attempt recorded separately | 422, unresolved quarantine, immutable failed attempt |
+| Successful replay response lost | projection, resolution and success audit already committed | replay returns resolved state without another effect |
 
 `Faults` is a no-op production bean. Tests inject `TestFaults` with a one-shot
 atomic fault boundary. There is no HTTP header, endpoint or environment switch for
 production failure injection. These are deterministic exceptions modeling crash
-boundaries, not proof of OS power-loss durability. PostgreSQL crash recovery and
+boundaries. `ProcessRecoveryIT` additionally kills child JVMs and restarts PostgreSQL while retaining storage to exercise real process recovery. Neither experiment proves OS power-loss durability. PostgreSQL crash recovery and
 storage durability depend on actual deployment configuration and tested backups.
 
 ## Demo A–D and G
@@ -48,9 +51,17 @@ remain valid. Existing service processes are not restarted by dependency startup
 conditions. Publisher retries grow exponentially from one second to at most 256
 seconds in this implementation. Wait for the due time; never delete pending outbox
 records to make a dashboard green. Broker restart with its named volume preserves
-broker data. The integration test pauses/unpauses the real broker to retain its
-advertised address and simulates acknowledgment loss; this is a narrower failure
-than replacing a whole broker cluster.
+broker data. The integration test stops/starts the same real broker container,
+binds a stable host port so its advertised listener remains valid, and simulates
+acknowledgment loss. This verifies broker interruption with retained storage;
+replacing an entire replicated broker cluster requires a separate deployment drill.
+
+For a poison event, inspect `/api/v1/admin/events/quarantine` with an administrator
+token, repair the cause, then post an audited replay to
+`/api/v1/admin/events/quarantine/{id}/replays`. Supply a reason and optionally a
+corrected payload. Original evidence remains immutable. Watch the unresolved
+quarantine gauge as well as the pending outbox gauge: an empty outbox does not mean
+every event has been successfully projected. Follow [the event runbook](../operations/events.md).
 
 ## Demo H: load and debugging
 
