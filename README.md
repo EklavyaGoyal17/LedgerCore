@@ -163,7 +163,7 @@ properties; ArchUnit prevents circular module/framework dependencies and entity 
 SpotBugs checks bytecode; CycloneDX records runtime dependencies for the OSV scan.
 [Verification evidence](docs/VERIFICATION.md)
 records the clean build, pushed-revision CI, sustained workloads, connected traces,
-event delivery and restore drill. See the [master-prompt checklist](docs/MASTER_PROMPT_CHECKLIST.md)
+event delivery and restore drill. See the [technical requirements map](docs/REQUIREMENTS.md)
 for the complete requirement-to-evidence map.
 
 ## Explore the repository

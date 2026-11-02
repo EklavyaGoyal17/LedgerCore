@@ -15,11 +15,9 @@ separate open bug issues. There were no published tags or releases. Main was not
 branch-protected. This audit did not change repository settings, merge or close
 pull requests, or create a release.
 
-Authenticated inspection of the private Dependabot-alert endpoint returned HTTP
-403 with the available Git credential. Private alert state is therefore not
-claimed as verified. The resolved runtime dependency scan against OSV was executed
-independently; its findings, dated exceptions and package versions are included in
-the [verification evidence](../VERIFICATION.md).
+The resolved runtime dependency scan against OSV was executed independently; its
+findings, dated exceptions and package versions are included in the
+[verification evidence](../VERIFICATION.md).
 
 ## Open dependency proposals
 

@@ -65,11 +65,12 @@ mvn clean verify
 python scripts/demo.py
 ```
 
-Docker handles its own JDK/Maven; native Maven requires JDK 21. In this workspace
-the API runs at **http://localhost:8088** because another project uses 8080. Set
-BASE_URL accordingly for the demo. [VERIFICATION.md](VERIFICATION.md) contains exact
-PowerShell setup and fresh-clone distinctions. Swagger is at
-http://localhost:8088/swagger-ui/index.html; Grafana at http://localhost:3000.
+Docker handles its own JDK/Maven; native Maven requires an installed JDK 21 and
+Maven 3.9+. Compose exposes the API at **http://localhost:8080** by default; set
+`API_PORT` in `.env` to choose another host port and set `BASE_URL` accordingly for
+the demo. [VERIFICATION.md](VERIFICATION.md) contains setup commands and measured
+results. Swagger is at `/swagger-ui/index.html` on the selected API port; Grafana
+defaults to http://localhost:3000.
 
 The expanded clean verification covers domain, architecture, generated properties,
 real PostgreSQL/Kafka/Redis, populated-schema upgrades and separate-JVM crash

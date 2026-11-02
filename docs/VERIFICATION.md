@@ -41,7 +41,7 @@ Java 21. This is simulated financial infrastructure with no real payment rails.
 | Backup safety | Three Python tests passed for binary streams, exclusive backup and safe new-target restore guards |
 | Education | All 14 guides, nine ADRs, 60 interview Q&A; referenced files and local documentation links checked |
 
-The [master-prompt checklist](MASTER_PROMPT_CHECKLIST.md) maps requirements to
+The [technical requirements map](REQUIREMENTS.md) maps requirements to
 implementation and evidence. [Trace evidence](verification/observability.json) and
 [resolved dependency scan](verification/dependency-scan.json) retain safe results.
 
@@ -78,9 +78,8 @@ including the image build, runtime check, safety tests and OSV scan. The
 [machine-readable CI result](verification/ci.json) records that exact SHA.
 Subsequent evidence changes trigger verification again; see the
 [Actions history](https://github.com/EklavyaGoyal17/LedgerCore/actions/workflows/ci.yml)
-for the latest revision. Private Dependabot-alert inspection returned 403 with the available
-credential; no private-alert state is claimed. The resolved-runtime OSV scan was
-executed independently.
+for the latest revision. Dependency findings refer to the independently executed
+resolved-runtime OSV scan and its documented scope.
 
 Java 24/26 and independent Boot 4/springdoc 3 proposals are deferred to deliberate
 migrations. Compatible pins are retained; optional build-tool upgrades are
@@ -89,27 +88,27 @@ solely because its initial-branch check was green.
 
 ## Reproduce
 
-Another local project uses port 8080. The ignored `.env` uses API_PORT=8088 and
-TRACE_SAMPLE_PROBABILITY=1; Compose defaults are 8080 and 10% sampling. Ordinary
-operation uses 120 requests/minute. The isolated benchmark temporarily raises that
-limit and restores it afterward.
+Install JDK 21 and Maven 3.9+, configure `JAVA_HOME`/`PATH`, and start Docker before
+native integration tests. Compose defaults to API port 8080 and 10% trace sampling;
+`API_PORT` and `TRACE_SAMPLE_PROBABILITY` can override them. The recorded experiment
+used port 8088 and full trace sampling. Ordinary operation uses 120 requests/minute;
+the isolated benchmark temporarily raises that limit and restores it afterward.
 
 ```powershell
-$env:JAVA_HOME = (Get-ChildItem .tools\jdk21 -Directory | Select-Object -First 1).FullName
-$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+java -version  # must report Java 21
+mvn -version  # must use the same JDK
 mvn -B -ntp clean verify
 python scripts/scan-dependencies.py
 python scripts/test_database_tools.py
 docker compose up --build -d --wait --wait-timeout 300
-$env:BASE_URL = 'http://localhost:8088'
+$env:BASE_URL = 'http://localhost:8080' # match the selected API_PORT
 python scripts/demo.py
 python scripts/check-observability.py
 python scripts/restore-drill.py
 ```
 
-The local `.tools` JDK is ignored. A fresh clone can use installed JDK 21/Maven
-3.9+; Docker builds its own toolchain. The [OpenAPI export](api/openapi.json) records
-this local server URL; `/v3/api-docs` generates the contract. Testcontainers uses
+Docker builds its own Java toolchain. The [OpenAPI export](api/openapi.json) records
+the verification server URL; `/v3/api-docs` generates the contract. Testcontainers uses
 isolated databases rather than Compose data. Restore comparisons require writers
 paused.
 
