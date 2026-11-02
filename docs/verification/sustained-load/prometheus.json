@@ -1,0 +1,12 @@
+{
+  "from": "2026-11-02T14:08:37.889931+00:00",
+  "to": "2026-11-02T14:14:35.564526+00:00",
+  "samplePeriodSeconds": 5,
+  "scope": "Maximum observed Prometheus samples during fixture provisioning and all five workloads; not continuous peaks",
+  "metrics": {
+    "maximumActivePoolConnections": 16.0,
+    "maximumPendingPoolCallers": 0.0,
+    "maximumPendingOutbox": 5602.0,
+    "maximumKafkaConsumerLag": 0.0
+  }
+}

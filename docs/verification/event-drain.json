@@ -1,0 +1,145 @@
+{
+  "status": "PASS",
+  "observationStartedAt": "2026-11-02T14:17:34.548273+00:00",
+  "observedAt": "2026-11-02T14:20:14.614064+00:00",
+  "elapsedSinceLoadFinishedSeconds": 339.05,
+  "normalRateLimitRestored": true,
+  "finalState": {
+    "outbox": 9047,
+    "pending": 0,
+    "unconsumed": 0,
+    "projection": 9047,
+    "quarantined": 0,
+    "observedAt": "2026-11-02T14:20:14.614064+00:00"
+  },
+  "samples": [
+    {
+      "outbox": 9047,
+      "pending": 2930,
+      "unconsumed": 2930,
+      "projection": 6117,
+      "quarantined": 0,
+      "observedAt": "2026-11-02T14:17:34.548273+00:00"
+    },
+    {
+      "outbox": 9047,
+      "pending": 2730,
+      "unconsumed": 2730,
+      "projection": 6317,
+      "quarantined": 0,
+      "observedAt": "2026-11-02T14:17:45.228230+00:00"
+    },
+    {
+      "outbox": 9047,
+      "pending": 2555,
+      "unconsumed": 2555,
+      "projection": 6492,
+      "quarantined": 0,
+      "observedAt": "2026-11-02T14:17:55.856732+00:00"
+    },
+    {
+      "outbox": 9047,
+      "pending": 2355,
+      "unconsumed": 2355,
+      "projection": 6692,
+      "quarantined": 0,
+      "observedAt": "2026-11-02T14:18:06.656334+00:00"
+    },
+    {
+      "outbox": 9047,
+      "pending": 2160,
+      "unconsumed": 2160,
+      "projection": 6887,
+      "quarantined": 0,
+      "observedAt": "2026-11-02T14:18:17.313922+00:00"
+    },
+    {
+      "outbox": 9047,
+      "pending": 1960,
+      "unconsumed": 1961,
+      "projection": 7086,
+      "quarantined": 0,
+      "observedAt": "2026-11-02T14:18:27.945172+00:00"
+    },
+    {
+      "outbox": 9047,
+      "pending": 1765,
+      "unconsumed": 1765,
+      "projection": 7282,
+      "quarantined": 0,
+      "observedAt": "2026-11-02T14:18:38.583439+00:00"
+    },
+    {
+      "outbox": 9047,
+      "pending": 1555,
+      "unconsumed": 1555,
+      "projection": 7492,
+      "quarantined": 0,
+      "observedAt": "2026-11-02T14:18:49.222135+00:00"
+    },
+    {
+      "outbox": 9047,
+      "pending": 1355,
+      "unconsumed": 1355,
+      "projection": 7692,
+      "quarantined": 0,
+      "observedAt": "2026-11-02T14:18:59.905197+00:00"
+    },
+    {
+      "outbox": 9047,
+      "pending": 1155,
+      "unconsumed": 1155,
+      "projection": 7892,
+      "quarantined": 0,
+      "observedAt": "2026-11-02T14:19:10.497663+00:00"
+    },
+    {
+      "outbox": 9047,
+      "pending": 941,
+      "unconsumed": 941,
+      "projection": 8106,
+      "quarantined": 0,
+      "observedAt": "2026-11-02T14:19:21.145924+00:00"
+    },
+    {
+      "outbox": 9047,
+      "pending": 730,
+      "unconsumed": 730,
+      "projection": 8317,
+      "quarantined": 0,
+      "observedAt": "2026-11-02T14:19:31.771801+00:00"
+    },
+    {
+      "outbox": 9047,
+      "pending": 505,
+      "unconsumed": 505,
+      "projection": 8542,
+      "quarantined": 0,
+      "observedAt": "2026-11-02T14:19:42.336520+00:00"
+    },
+    {
+      "outbox": 9047,
+      "pending": 301,
+      "unconsumed": 301,
+      "projection": 8746,
+      "quarantined": 0,
+      "observedAt": "2026-11-02T14:19:52.980383+00:00"
+    },
+    {
+      "outbox": 9047,
+      "pending": 55,
+      "unconsumed": 55,
+      "projection": 8992,
+      "quarantined": 0,
+      "observedAt": "2026-11-02T14:20:04.023729+00:00"
+    },
+    {
+      "outbox": 9047,
+      "pending": 0,
+      "unconsumed": 0,
+      "projection": 9047,
+      "quarantined": 0,
+      "observedAt": "2026-11-02T14:20:14.614064+00:00"
+    }
+  ]
+}

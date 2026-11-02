@@ -1,0 +1,248 @@
+{
+  "startedAt": "2026-11-02T14:08:37.889931+00:00",
+  "simulation": true,
+  "host": {
+    "os": "Windows",
+    "release": "11",
+    "architecture": "AMD64",
+    "logicalCPUs": 16
+  },
+  "durationPerMode": "60s",
+  "vus": 5,
+  "contentionVUs": 20,
+  "k6Image": "grafana/k6:1.0.0",
+  "thinkTimeSeconds": 0.1,
+  "runs": [
+    {
+      "mode": "accounts",
+      "runId": "2179e0cc-3a39-462c-8506-567c8b0c5c2c",
+      "exitCode": 0,
+      "elapsedSeconds": 61.359,
+      "databaseAfterMode": {
+        "journalTransactions": 66,
+        "journalEntries": 132,
+        "transfers": 72,
+        "pendingOutbox": 0,
+        "quarantinedEvents": 0,
+        "databaseBytes": 9407635
+      },
+      "resourceSnapshotAfterMode": [
+        {
+          "BlockIO": "287kB / 0B",
+          "CPUPerc": "0.64%",
+          "Container": "ledgercore-backend-1",
+          "ID": "dbe95add529f",
+          "MemPerc": "6.19%",
+          "MemUsage": "480.9MiB / 7.591GiB",
+          "Name": "ledgercore-backend-1",
+          "NetIO": "8.16MB / 52.7MB",
+          "PIDs": "67"
+        },
+        {
+          "BlockIO": "41.3MB / 4.09MB",
+          "CPUPerc": "0.12%",
+          "Container": "ledgercore-postgres-1",
+          "ID": "eecab621a1cd",
+          "MemPerc": "1.06%",
+          "MemUsage": "82.24MiB / 7.591GiB",
+          "Name": "ledgercore-postgres-1",
+          "NetIO": "3.08MB / 6.02MB",
+          "PIDs": "22"
+        }
+      ]
+    },
+    {
+      "mode": "balance",
+      "runId": "bb10d4a2-9635-4ed4-a469-0d61ab496b90",
+      "exitCode": 0,
+      "elapsedSeconds": 61.254,
+      "databaseAfterMode": {
+        "journalTransactions": 66,
+        "journalEntries": 132,
+        "transfers": 72,
+        "pendingOutbox": 0,
+        "quarantinedEvents": 0,
+        "databaseBytes": 9407635
+      },
+      "resourceSnapshotAfterMode": [
+        {
+          "BlockIO": "287kB / 0B",
+          "CPUPerc": "0.81%",
+          "Container": "ledgercore-backend-1",
+          "ID": "dbe95add529f",
+          "MemPerc": "6.30%",
+          "MemUsage": "489.4MiB / 7.591GiB",
+          "Name": "ledgercore-backend-1",
+          "NetIO": "12.9MB / 73.8MB",
+          "PIDs": "67"
+        },
+        {
+          "BlockIO": "41.3MB / 4.82MB",
+          "CPUPerc": "0.22%",
+          "Container": "ledgercore-postgres-1",
+          "ID": "eecab621a1cd",
+          "MemPerc": "1.06%",
+          "MemUsage": "82.39MiB / 7.591GiB",
+          "Name": "ledgercore-postgres-1",
+          "NetIO": "5.62MB / 8.73MB",
+          "PIDs": "22"
+        }
+      ]
+    },
+    {
+      "mode": "transfers",
+      "runId": "42e88f04-a70b-4b8c-9841-faafd267729d",
+      "exitCode": 0,
+      "elapsedSeconds": 61.618,
+      "databaseAfterMode": {
+        "journalTransactions": 2572,
+        "journalEntries": 5144,
+        "transfers": 2578,
+        "pendingOutbox": 1231,
+        "quarantinedEvents": 0,
+        "databaseBytes": 17943699
+      },
+      "resourceSnapshotAfterMode": [
+        {
+          "BlockIO": "1.14MB / 0B",
+          "CPUPerc": "10.99%",
+          "Container": "ledgercore-backend-1",
+          "ID": "dbe95add529f",
+          "MemPerc": "6.42%",
+          "MemUsage": "499.4MiB / 7.591GiB",
+          "Name": "ledgercore-backend-1",
+          "NetIO": "24.3MB / 107MB",
+          "PIDs": "67"
+        },
+        {
+          "BlockIO": "43MB / 65.9MB",
+          "CPUPerc": "12.93%",
+          "Container": "ledgercore-postgres-1",
+          "ID": "eecab621a1cd",
+          "MemPerc": "1.40%",
+          "MemUsage": "109.1MiB / 7.591GiB",
+          "Name": "ledgercore-postgres-1",
+          "NetIO": "17.2MB / 16.7MB",
+          "PIDs": "22"
+        }
+      ]
+    },
+    {
+      "mode": "contention",
+      "runId": "80b95857-12a9-42e6-a083-2791358a8bd8",
+      "exitCode": 0,
+      "elapsedSeconds": 61.841,
+      "databaseAfterMode": {
+        "journalTransactions": 8108,
+        "journalEntries": 16216,
+        "transfers": 8114,
+        "pendingOutbox": 5642,
+        "quarantinedEvents": 0,
+        "databaseBytes": 35892371
+      },
+      "resourceSnapshotAfterMode": [
+        {
+          "BlockIO": "1.14MB / 0B",
+          "CPUPerc": "12.16%",
+          "Container": "ledgercore-backend-1",
+          "ID": "dbe95add529f",
+          "MemPerc": "6.61%",
+          "MemUsage": "514.1MiB / 7.591GiB",
+          "Name": "ledgercore-backend-1",
+          "NetIO": "45.7MB / 170MB",
+          "PIDs": "77"
+        },
+        {
+          "BlockIO": "43.5MB / 211MB",
+          "CPUPerc": "12.69%",
+          "Container": "ledgercore-postgres-1",
+          "ID": "eecab621a1cd",
+          "MemPerc": "2.08%",
+          "MemUsage": "161.4MiB / 7.591GiB",
+          "Name": "ledgercore-postgres-1",
+          "NetIO": "40.5MB / 32.3MB",
+          "PIDs": "22"
+        }
+      ]
+    },
+    {
+      "mode": "mixed",
+      "runId": "4d895f05-0581-4ff6-b2fd-866aa2215b8a",
+      "exitCode": 0,
+      "elapsedSeconds": 61.416,
+      "databaseAfterMode": {
+        "journalTransactions": 8995,
+        "journalEntries": 17990,
+        "transfers": 9001,
+        "pendingOutbox": 5529,
+        "quarantinedEvents": 0,
+        "databaseBytes": 38456467
+      },
+      "resourceSnapshotAfterMode": [
+        {
+          "BlockIO": "1.14MB / 0B",
+          "CPUPerc": "3.69%",
+          "Container": "ledgercore-backend-1",
+          "ID": "dbe95add529f",
+          "MemPerc": "6.61%",
+          "MemUsage": "513.9MiB / 7.591GiB",
+          "Name": "ledgercore-backend-1",
+          "NetIO": "54MB / 197MB",
+          "PIDs": "77"
+        },
+        {
+          "BlockIO": "43.5MB / 242MB",
+          "CPUPerc": "33.88%",
+          "Container": "ledgercore-postgres-1",
+          "ID": "eecab621a1cd",
+          "MemPerc": "2.14%",
+          "MemUsage": "166.2MiB / 7.591GiB",
+          "Name": "ledgercore-postgres-1",
+          "NetIO": "46.8MB / 37.5MB",
+          "PIDs": "22"
+        }
+      ]
+    }
+  ],
+  "docker": {
+    "ServerVersion": "29.5.3",
+    "NCPU": 16,
+    "MemTotal": 8151265280,
+    "Driver": "overlayfs",
+    "KernelVersion": "6.18.33.1-microsoft-standard-WSL2",
+    "Architecture": "x86_64"
+  },
+  "initialReconciliation": {
+    "id": "31e749c5-a185-438a-82f2-87746e475803",
+    "startedAt": "2026-11-02T14:09:12.518669Z",
+    "finishedAt": "2026-11-02T14:09:12.537309Z",
+    "recordsChecked": 249,
+    "discrepancies": [],
+    "status": "CLEAN"
+  },
+  "initialDatabase": {
+    "journalTransactions": 66,
+    "journalEntries": 132,
+    "transfers": 72,
+    "pendingOutbox": 0,
+    "quarantinedEvents": 0,
+    "databaseBytes": 9342099
+  },
+  "finalReconciliation": {
+    "id": "a5ae7625-1883-40ce-83c1-ff0437870482",
+    "startedAt": "2026-11-02T14:14:35.245822Z",
+    "finishedAt": "2026-11-02T14:14:35.542216Z",
+    "recordsChecked": 27036,
+    "discrepancies": [],
+    "status": "CLEAN"
+  },
+  "finishedAt": "2026-11-02T14:14:35.564526+00:00",
+  "finalDatabase": {
+    "journalTransactions": 8995,
+    "journalEntries": 17990,
+    "transfers": 9001,
+    "pendingOutbox": 5455,
+    "quarantinedEvents": 0,
+    "databaseBytes": 38472851
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "status": "PASSED",
+  "sha256": "d2668c2ea9995547906ec0bbf1e17583ba6754402c8e1b8d6eaecc4a28627e6c",
+  "verified": {
+    "journals": 8995,
+    "entries": 17990,
+    "transfers": 9001,
+    "idempotency": 9001,
+    "audit": 9047,
+    "outbox": 9047,
+    "accounts": 39,
+    "unbalanced": 0,
+    "orphans": 0,
+    "projection_mismatches": 0,
+    "unfinished": 0
+  },
+  "restore_database": "ledgercore_restore_1062070014f0",
+  "cleanup": "disposable database removed"
+}

@@ -162,8 +162,9 @@ proves a populated V1 database upgrades safely. jqwik generates and shrinks doma
 properties; ArchUnit prevents circular module/framework dependencies and entity leaks.
 SpotBugs checks bytecode; CycloneDX records runtime dependencies for the OSV scan.
 [Verification evidence](docs/VERIFICATION.md)
-distinguishes executed checks from configured checks. CI is configured; a local
-build is not proof that GitHub Actions ran.
+records the clean build, pushed-revision CI, sustained workloads, connected traces,
+event delivery and restore drill. See the [master-prompt checklist](docs/MASTER_PROMPT_CHECKLIST.md)
+for the complete requirement-to-evidence map.
 
 ## Explore the repository
 

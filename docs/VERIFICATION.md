@@ -47,18 +47,38 @@ implementation and evidence. [Trace evidence](verification/observability.json) a
 
 ## Performance and logical recovery
 
-The five-mode sustained experiment and post-load logical restore drill are being
-recorded separately from the completed clean build. Their results will be added
-after all modes, reconciliation and restore verification finish. Historical
-two-second smoke outputs are retained for provenance, not sustained-load proof.
+All five 60-second k6 modes passed, with five virtual users normally and twenty
+for shared-source contention: **16,283 requests, zero HTTP failures**, and CLEAN
+reconciliation before/after. The [measured report](verification/sustained-load/README.md)
+contains p50/p95/p99, throughput, fixture/hardware details and raw summaries.
+Historical two-second smoke outputs remain provenance rather than sustained proof.
+
+The default publisher accumulated a durable backlog during write bursts. The
+[delivery observation](verification/event-drain.json) subsequently verified all
+**9,047 outbox events published and projected**, with zero pending, unconsumed or
+quarantined events. The normal 120/minute rate limit was restored and the backend
+recreated healthy. The report explains why zero Kafka lag can coexist with an
+unpublished PostgreSQL backlog; no unsupported event-throughput claim is made.
+
+The post-load [logical restore drill](verification/restore-drill.json) restored
+**8,995 journals, 17,990 entries and 9,001 transfer/idempotency records** into a
+new disposable database. Counts matched the source, with zero unbalanced journals,
+orphans, projection mismatches or unfinished requests. Only that disposable target
+was removed. The [query plans](architecture/query-plan-evidence.txt) include the
+actual statement window on the busiest account's 6,212 entries.
 
 ## GitHub delivery
 
 The [GitHub review](operations/github-review.md) records the initial-main CI result
 and all ten dependency proposals. The completion workflow additionally builds the
-Docker image and requires a Java 21 runtime. Check the [Actions history](https://github.com/EklavyaGoyal17/LedgerCore/actions/workflows/ci.yml)
-for the exact delivered SHA; the initial commit's success does not validate these
-changes. Private Dependabot-alert inspection returned 403 with the available
+Docker image and requires a Java 21 runtime. The hardened implementation commit
+`a657c40aff69d6b2c1ba6de9fd8df7553677fe0f` **passed** its
+[push-triggered CI run](https://github.com/EklavyaGoyal17/LedgerCore/actions/runs/41459540117),
+including the image build, runtime check, safety tests and OSV scan. The
+[machine-readable CI result](verification/ci.json) records that exact SHA.
+Subsequent evidence changes trigger verification again; see the
+[Actions history](https://github.com/EklavyaGoyal17/LedgerCore/actions/workflows/ci.yml)
+for the latest revision. Private Dependabot-alert inspection returned 403 with the available
 credential; no private-alert state is claimed. The resolved-runtime OSV scan was
 executed independently.
 

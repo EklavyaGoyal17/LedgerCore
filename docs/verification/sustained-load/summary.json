@@ -1,0 +1,67 @@
+{
+  "codeRevision": "a657c40aff69d6b2c1ba6de9fd8df7553677fe0f",
+  "durationPerMode": "60s",
+  "vus": 5,
+  "contentionVUs": 20,
+  "totalRequests": 16283,
+  "requestFailures": 0,
+  "checksPassed": true,
+  "finalReconciliation": "CLEAN",
+  "modes": [
+    {
+      "mode": "accounts",
+      "requests": 2758,
+      "requestsPerSecond": 45.96,
+      "p50Milliseconds": 6.26,
+      "p95Milliseconds": 12.45,
+      "p99Milliseconds": 16.88,
+      "completedPostings": 0,
+      "insufficientFunds": 0,
+      "pendingOutboxAfterMode": 0
+    },
+    {
+      "mode": "balance",
+      "requests": 2824,
+      "requestsPerSecond": 47.04,
+      "p50Milliseconds": 4.75,
+      "p95Milliseconds": 8.91,
+      "p99Milliseconds": 11.52,
+      "completedPostings": 0,
+      "insufficientFunds": 0,
+      "pendingOutboxAfterMode": 0
+    },
+    {
+      "mode": "transfers",
+      "requests": 2506,
+      "requestsPerSecond": 41.72,
+      "p50Milliseconds": 15.78,
+      "p95Milliseconds": 33.29,
+      "p99Milliseconds": 47.1,
+      "completedPostings": 2506,
+      "insufficientFunds": 0,
+      "pendingOutboxAfterMode": 1231
+    },
+    {
+      "mode": "contention",
+      "requests": 5536,
+      "requestsPerSecond": 91.94,
+      "p50Milliseconds": 39.14,
+      "p95Milliseconds": 498.0,
+      "p99Milliseconds": 767.73,
+      "completedPostings": 5536,
+      "insufficientFunds": 0,
+      "pendingOutboxAfterMode": 5642
+    },
+    {
+      "mode": "mixed",
+      "requests": 2659,
+      "requestsPerSecond": 44.24,
+      "p50Milliseconds": 6.56,
+      "p95Milliseconds": 28.48,
+      "p99Milliseconds": 47.61,
+      "completedPostings": 887,
+      "insufficientFunds": 0,
+      "pendingOutboxAfterMode": 5529
+    }
+  ]
+}
