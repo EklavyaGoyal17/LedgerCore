@@ -4,7 +4,7 @@ COPY pom.xml .
 COPY src ./src
 RUN --mount=type=cache,id=ledgercore-maven,target=/root/.m2 mvn -B -ntp -DskipTests package
 
-FROM eclipse-temurin:21-jre-alpine@sha256:b48e02e0ea88d7bfb305335df94923bdef394905f4147dccd52e873cf17b1088
+FROM eclipse-temurin:21-jre-alpine@sha256:82cf3d9ccbe1ed46252008d51b2f2329e6b9e8a2f4394c4bebefc3ea7f4b1372
 RUN addgroup -S ledgercore && adduser -S ledgercore -G ledgercore
 WORKDIR /app
 COPY --from=build --chown=ledgercore:ledgercore /workspace/target/ledgercore-1.0.0.jar app.jar
